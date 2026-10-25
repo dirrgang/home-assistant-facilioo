@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -234,10 +234,12 @@ def _json_schema(value: Any) -> Any:
     return result
 
 
-def _validate(payload: Any, schema: dict[str, Any]) -> None:
+def _validate(
+    payload: Any, schema: dict[str, Any], *, document: dict[str, Any] | None = None
+) -> None:
     from jsonschema import Draft202012Validator, FormatChecker
 
-    document = _json_schema(_schemas())
+    document = _json_schema(_schemas() if document is None else document)
     document.update(_json_schema(schema))
     Draft202012Validator(document, format_checker=FormatChecker()).validate(payload)
 
@@ -493,3 +495,155 @@ def test_extractor_reproduces_snapshot_and_rejects_missing_consumed_fields() -> 
     del source["components"]["schemas"]["ConsumptionReadingRead"]["properties"]["costs"]
     with pytest.raises(KeyError):
         extract(json.dumps(source).encode(), "2026-10-24")
+
+
+# Research #64 uses a separate projection, leaving the #58 runtime contract pinned.
+def _readings_review() -> dict[str, Any]:
+    return json.loads(
+        (Path(__file__).parent / "fixtures/facilioo_readings_review.json").read_text()
+    )
+
+
+def test_ordinary_and_extended_reading_contract_differences() -> None:
+    from scripts.extract_api_contract import extract
+
+    contract = _readings_review()
+    schemas = contract["components"]["schemas"]
+    ordinary = schemas["ConsumptionReadingRead"]
+    extended = schemas["ConsumptionReadingExtended"]
+    extra = {"valuePercentageDifferenceToLastYear", "costPercentageDifferenceToLastYear"}
+    assert set(extended["properties"]) - set(ordinary["properties"]) == extra
+    assert ordinary == {
+        **extended,
+        "properties": {k: v for k, v in extended["properties"].items() if k not in extra},
+    }
+    for field in extra:
+        assert extended["properties"][field] == {
+            "type": "number",
+            "format": "double",
+            "nullable": True,
+        }
+    paths = contract["paths"]
+    ordinary_search = paths["/api/consumption-readings/search"]["post"]
+    extended_search = paths["/api/consumption-readings-extended/search"]["post"]
+    assert ordinary_search["requestBody"] == extended_search["requestBody"]
+    assert ordinary_search["parameters"] == extended_search["parameters"]
+    assert ordinary_search["security"] == extended_search["security"] == [{"Bearer": []}]
+    assert [
+        p["name"]
+        for p in paths["/api/consumption-readings-extended"]["get"]["parameters"]
+        if p["in"] == "query"
+    ] == ["PageSize", "PageNumber"]
+    assert "SortByAttributeName" in [
+        p["name"] for p in paths["/api/consumption-readings"]["get"]["parameters"]
+    ]
+    # Reproduction mechanics are offline; full-byte provenance is checked separately.
+    source = {**contract, "info": {"version": "v2.0"}}
+    result = extract(json.dumps(source).encode(), "2026-10-25", readings_review=True)
+    assert result["paths"] == paths
+    assert result["components"] == contract["components"]
+
+
+class _ReadingsReviewSession(_Session):
+    async def request(self, method: str, url: str, **kwargs: Any) -> _Response:
+        contract = _readings_review()
+        operation = contract["paths"][url.removeprefix(BASE_URL)][method.lower()]
+        params = kwargs["params"]
+        query = {p["name"]: p for p in operation["parameters"] if p["in"] == "query"}
+        assert set(params) <= set(query)
+        for name, value in params.items():
+            _validate(value, query[name]["schema"], document=contract)
+        if "requestBody" in operation:
+            _validate(
+                kwargs["json"],
+                operation["requestBody"]["content"]["application/json"]["schema"],
+                document=contract,
+            )
+        assert kwargs["headers"]["Authorization"] == "Bearer synthetic-token"
+        response = await super().request(method, url, **kwargs)
+        _validate(
+            response.payload,
+            operation["responses"]["200"]["content"]["application/json"]["schema"],
+            document=contract,
+        )
+        return response
+
+
+@pytest.mark.parametrize("partial", [False, True])
+async def test_four_reading_routes_produce_identical_monthly_and_cumulative_history(
+    partial: bool,
+) -> None:
+    from decimal import Decimal
+
+    from custom_components.facilioo.models import ConsumptionMeter, aggregate_monthly
+    from custom_components.facilioo.statistics import build_statistics
+
+    january = {
+        **_responses()["reading"],
+        "readerAccountId": 456,
+        "wasChecked": False,
+        "wasDelivered": False,
+        "averageReferenceValue": 0.8,
+        "averageReferenceValueInDifferentUnitOfMeasure": 40.0,
+    }
+    february = {
+        **january,
+        "id": 11,
+        "readingDate": "2026-02-28T23:00:00Z",
+        "currentValue": 0.25,
+        "costs": 2.75,
+        "currentValueInDifferentUnitOfMeasure": None if partial else 13.5,
+    }
+    meter = ConsumptionMeter.from_api(_responses()["meter"])
+    snapshots = []
+    for path, operation in _readings_review()["paths"].items():
+        method = next(iter(operation)).upper()
+        rows = [dict(january), dict(february)]
+        if "-extended" in path:
+            for row in rows:
+                row.update(
+                    valuePercentageDifferenceToLastYear=-12.5,
+                    costPercentageDifferenceToLastYear=None,
+                )
+        session = _ReadingsReviewSession([_page([rows[0]], 1, 2), _page([rows[1]], 2, 2)])
+        client = FaciliooApiClient(session, "example@example.invalid", "synthetic-password")
+        client._token = "synthetic-token"
+        if path == READINGS_ENDPOINT:
+            readings = await client.async_get_readings()
+        elif path == EXTENDED_READINGS_ENDPOINT:
+            readings = await client.async_get_extended_readings()
+        elif path == READINGS_SEARCH_ENDPOINT:
+            readings = await client.async_search_readings(
+                dates=["2026"], changed_since=datetime(2026, 1, 1, tzinfo=UTC)
+            )
+        else:
+            # Research-only invocation of existing pagination/parser primitives.
+            # There is no proposed new runtime method or change of sync endpoint.
+            raw = await client._paginate(
+                path,
+                page_size=100,
+                method="POST",
+                json_body={
+                    "orderBy": ["readingDate asc"],
+                    "dates": ["2026"],
+                    "changedSince": "2026-01-01T00:00:00Z",
+                },
+            )
+            from custom_components.facilioo.models import ConsumptionReading
+
+            readings = client._parse_items(raw, ConsumptionReading.from_api, "reading")
+        assert len(readings) == 2
+        assert not session.responses
+        assert [call[2]["params"]["PageNumber"] for call in session.calls] == [1, 2]
+        if method == "POST":
+            assert session.calls[0][2]["json"] == session.calls[1][2]["json"]
+        monthly = aggregate_monthly((meter,), readings, "Europe/Berlin")[meter.kind]
+        assert [item.value for item in monthly] == [Decimal("0.75"), Decimal("0.25")]
+        consumption, _ = build_statistics(monthly, {}, "Europe/Berlin")
+        costs, _ = build_statistics(monthly, {}, "Europe/Berlin", costs=True)
+        alternative, _ = build_statistics(monthly, {}, "Europe/Berlin", different_unit=True)
+        assert [point["sum"] for point in consumption] == [0, 0.75, 1.0]
+        assert [point["sum"] for point in costs] == [0, 7.25, 10.0]
+        assert [point["sum"] for point in alternative] == ([] if partial else [0, 36.5, 50.0])
+        snapshots.append((readings, monthly, consumption, costs, alternative))
+    assert all(snapshot == snapshots[0] for snapshot in snapshots[1:])
