@@ -335,3 +335,27 @@ def aggregate_monthly(
     return {
         kind: tuple(sorted(items, key=lambda item: item.month)) for kind, items in result.items()
     }
+
+
+def billing_coverage(data: ConsumptionData, kind: MeterKind, time_zone: str) -> dict[str, Any]:
+    """Summarize valid billing coverage without IDs or a completeness guarantee."""
+    meters = tuple(meter for meter in data.meters if meter.kind is kind)
+    latest_by_meter: dict[int, date] = {}
+    for (meter_id, month), reading in latest_readings_by_meter_month(
+        meters, data.readings, time_zone
+    ).items():
+        if reading.deleted or reading.value is None or reading.value < 0:
+            continue
+        latest_by_meter[meter_id] = max(month, latest_by_meter.get(meter_id, month))
+    latest = data.latest(kind)
+    oldest = min(latest_by_meter.values(), default=None)
+    return {
+        "latest_billing_month": latest.month.isoformat()[:7] if latest else None,
+        "oldest_meter_billing_month": oldest.isoformat()[:7] if oldest else None,
+        "meter_count": len(meters),
+        "meters_with_history": len(latest_by_meter),
+        "meters_in_latest_month": (
+            sum(month == latest.month for month in latest_by_meter.values()) if latest else 0
+        ),
+        "is_estimated": latest.is_estimated if latest else None,
+    }

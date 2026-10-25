@@ -111,10 +111,13 @@ integration deliberately does not poll every few minutes.
 
 ## Entities
 
-Entities are created only when the corresponding source meter exists:
+Consumption and billing-month entities are created only when the corresponding source meter
+exists. The import timestamp is available for the integration as a whole:
 
 | Entity name | Meaning | Default |
 | --- | --- | --- |
+| Last successful data import | Time the latest import finished successfully | Enabled (diagnostic) |
+| Warm water / heating — latest available billing month | Newest usable billing month, as YYYY-MM | Enabled (diagnostic) |
 | Warm water — cumulative total | Sum of all valid monthly warm-water readings | Enabled |
 | Warm water energy — cumulative total | Sum of Facilioo's monthly warm-water energy values | Enabled when complete |
 | Heating energy — cumulative total | Sum of all valid monthly heating readings | Enabled |
@@ -218,6 +221,52 @@ without persisting a fabricated API record.
 the authoritative revision and clears the previous consumption for that meter/month instead of
 leaving a stale cached value behind.
 
+### Import freshness and billing coverage
+
+**Last successful data import** is a timestamp diagnostic sensor. It advances only after
+readings have been fetched, processed and saved to the integration's consumption cache.
+A successful refresh with no new billing month still advances it. It describes the import,
+not the completion of the separately scheduled Recorder statistics write or a new publication
+by Facilioo. It does not certify that every upstream record was usable.
+
+**Warm water / Heating energy — latest available billing month** are diagnostic sensors whose
+states are `YYYY-MM`, independently for each supported kind. They show the newest month with
+usable, non-deleted, nonnegative consumption. They are month labels, not live readings or
+invented timestamps on the first day of a month. Empty, cleared or unusable history yields
+**unknown**, never a zero consumption or a fabricated month.
+
+The diagnostics remain readable during a failed refresh, preserving their last successful
+values. Their `last_refresh_success` attribute distinguishes those values from the result of
+the latest attempt. Existing consumption entities retain Home Assistant's normal unavailable
+behavior on update failure. No startup success is fabricated: if initial setup cannot refresh,
+normal setup/reauthentication handling applies. These values are not restored as a successful
+import from an earlier Home Assistant run.
+
+Billing-month entities expose privacy-minimal coverage attributes from the last successful
+snapshot; diagnostics include the same summary:
+
+| Attribute | Meaning |
+| --- | --- |
+| `meter_count` | Currently recognized meters of that kind |
+| `meters_with_history` | Meters with at least one usable consumption month |
+| `meters_in_latest_month` | Meters contributing usable readings to the displayed latest month |
+| `oldest_meter_billing_month` | Oldest of each meter's latest usable months; unknown when none has history |
+| `is_estimated` | At least one contributing reading in the latest month is marked estimated; unknown with no usable month |
+
+For example, if one of three warm-water meters reaches February, another only January and
+one has no usable readings, the month is `2026-02`, coverage is `1` of `3`, and the oldest
+meter month is `2026-01`. The existing latest-month consumption can therefore be a partial
+sum; freshness does not change that aggregation or claim completeness. `is_estimated: false`
+means no contributing reading was marked estimated; it does not independently verify its
+quality. Missing/null estimation flags retain the existing parser behavior.
+
+These counts do not identify which meter is missing and do not prove that an unreported
+month is due. Internal gaps, inactive/replaced meters, access changes and publication delays
+cannot reliably be distinguished from the current source semantics. **No completeness flag,
+missing-month zero, fixed publication deadline or stale-data alarm is invented.** Reliable
+expected-month/gap detection needs separately established publication and meter-activity
+semantics. Daily polling is unchanged; no extra API calls are made for these diagnostics.
+
 ## Time zones
 
 `readingDate` must include an offset. Facilioo examples such as `2025-11-30T23:00:00Z` represent
@@ -246,7 +295,7 @@ that ended. This also handles daylight-saving boundaries without fixed UTC-offse
 Communication is limited to **Home Assistant ↔ `https://api.facilioo.de`**. There is no telemetry,
 analytics, or forwarding of consumption data. Logs never intentionally include credentials,
 tokens, full API payloads, or account email addresses. Diagnostics contain only counts, recognized
-meter categories, update time, and API status.
+meter categories, billing-month coverage, update time, and API status.
 
 See [SECURITY.md](SECURITY.md) before reporting a security issue. Never attach real credentials,
 tokens, unredacted diagnostics, or personal meter identifiers to a public issue.
