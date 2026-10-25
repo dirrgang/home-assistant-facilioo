@@ -254,3 +254,85 @@ def test_naive_timestamp_is_rejected():
                 "readingDate": "2025-11-30T23:00:00",
             }
         )
+
+
+@pytest.fixture
+def multi_unit_example():
+    """Invented independent water meters; grouping metadata is not parsed today."""
+    raw_meters = (
+        {"id": 101, "typeId": 5, "unitOfMeasure": "M3", "meteredUnitId": 10},
+        {"id": 102, "typeId": 5, "unitOfMeasure": "M3", "meteredUnitId": 10},
+        {"id": 201, "typeId": 5, "unitOfMeasure": "M3", "meteredUnitId": 20},
+        {"id": 301, "typeId": 5, "unitOfMeasure": "M3", "meteredUnitId": None},
+        {"id": 401, "typeId": 5, "unitOfMeasure": "M3", "meteredPropertyId": 30},
+    )
+    values = {101: (1, 0.5), 102: (0.25, 0.75), 201: (2, 3), 301: (4, 5), 401: (8, 9)}
+    meters = tuple(ConsumptionMeter.from_api(raw) for raw in raw_meters)
+    readings = tuple(
+        ConsumptionReading.from_api(
+            {
+                "id": meter_id * 10 + month,
+                "consumptionMeterId": meter_id,
+                "readingDate": when,
+                "currentValue": value,
+                "costs": cost,
+            }
+        )
+        for meter_id, monthly in values.items()
+        for month, (when, value, cost) in enumerate(
+            zip(
+                ("2026-01-31T23:00:00Z", "2026-02-28T23:00:00Z"),
+                monthly,
+                {101: (2, 1), 102: (0.5, 1.5), 201: (4, 6), 301: (8, 10), 401: (16, 18)}[meter_id],
+                strict=True,
+            ),
+            start=1,
+        )
+    )
+    return meters, readings
+
+
+@pytest.mark.parametrize(
+    ("selected_ids", "monthly_values", "boundaries", "cost_boundaries"),
+    [
+        ({101, 102, 201, 301, 401}, ["15.25", "18.25"], [0, 15.25, 33.5], [0, 30.5, 67]),
+        ({101, 102}, ["1.25", "1.25"], [0, 1.25, 2.5], [0, 2.5, 5]),
+        ({201}, ["2", "3"], [0, 2, 5], [0, 4, 10]),
+        ({301}, ["4", "5"], [0, 4, 9], [0, 8, 18]),
+        ({401}, ["8", "9"], [0, 8, 17], [0, 16, 34]),
+    ],
+)
+def test_synthetic_meter_sets_have_independent_monthly_and_historical_sums(
+    multi_unit_example, selected_ids, monthly_values, boundaries, cost_boundaries
+):
+    from custom_components.facilioo.statistics import build_statistics
+
+    meters, readings = multi_unit_example
+    # Explicit test inputs, NOT an implemented unit selector. The parser has no
+    # unit relationship model; hand-picked sets illustrate the design alternatives.
+    selected = tuple(meter for meter in meters if meter.id in selected_ids)
+    monthly = aggregate_monthly(selected, readings, "Europe/Berlin")[MeterKind.WARM_WATER]
+    assert [item.value for item in monthly] == [Decimal(value) for value in monthly_values]
+    history, _ = build_statistics(monthly, {}, "Europe/Berlin")
+    costs, _ = build_statistics(monthly, {}, "Europe/Berlin", costs=True)
+    assert [point["sum"] for point in history] == boundaries
+    assert [point["sum"] for point in costs] == cost_boundaries
+
+
+def test_multi_meter_revision_does_not_replace_other_meter_in_same_unit(multi_unit_example):
+    meters, readings = multi_unit_example
+    corrected = ConsumptionReading.from_api(
+        {
+            "id": 1011,
+            "consumptionMeterId": 101,
+            "readingDate": "2026-01-31T23:00:00Z",
+            "currentValue": 1.5,
+            "lastModified": "2026-03-01T00:00:00Z",
+        }
+    )
+    selected = tuple(meter for meter in meters if meter.id in {101, 102})
+    monthly = aggregate_monthly(selected, readings + (corrected,), "Europe/Berlin")
+    assert [item.value for item in monthly[MeterKind.WARM_WATER]] == [
+        Decimal("1.75"),
+        Decimal("1.25"),
+    ]
