@@ -41,6 +41,8 @@ See [known Facilioo providers and portals](docs/known-facilioo-providers.md) for
 source-backed examples and evidence dates. **Being listed does not mean the
 property manager's accounts work with this integration**: authentication, API
 access, and available consumption meters have not been verified for those portals.
+See the [compatibility verification protocol](docs/compatibility-verification.md) for
+how to contribute a scoped, privacy-safe report.
 
 ## Installation
 

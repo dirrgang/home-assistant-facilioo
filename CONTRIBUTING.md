@@ -17,3 +17,7 @@ in commits, fixtures, issues, or pull requests.
 
 The Facilioo API is external and may differ by account. When reporting a schema variation, provide
 the smallest anonymized example that preserves field names and types.
+
+For another resident portal, follow the [compatibility verification protocol](docs/compatibility-verification.md)
+and its optional local probe. API observations, mocked regressions and end-to-end HA
+verification are separate evidence; do not broaden compatibility claims from a login alone.
