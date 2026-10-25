@@ -36,6 +36,9 @@
   },
   "entity": {
     "sensor": {
+      "last_successful_import": {"name": "Last successful data import"},
+      "warm_water_billing_month": {"name": "Warm water — latest available billing month"},
+      "heating_billing_month": {"name": "Heating energy — latest available billing month"},
       "warm_water_total": {"name": "Warm water — cumulative total"},
       "heating_energy_total": {"name": "Heating energy — cumulative total"},
       "warm_water_energy_total": {"name": "Warm water energy — cumulative total"},

@@ -5,7 +5,12 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from custom_components.facilioo.diagnostics import async_get_config_entry_diagnostics
-from custom_components.facilioo.models import ConsumptionData, MeterKind, MonthlyConsumption
+from custom_components.facilioo.models import (
+    ConsumptionData,
+    ConsumptionReading,
+    MeterKind,
+    MonthlyConsumption,
+)
 
 
 async def test_diagnostics_include_counts_but_no_identifiers():
@@ -15,7 +20,17 @@ async def test_diagnostics_include_counts_but_no_identifiers():
             SimpleNamespace(id=1234, kind=MeterKind.WARM_WATER),
             SimpleNamespace(id=5678, kind=MeterKind.HEATING),
         ),
-        readings=(SimpleNamespace(id=9876),),
+        readings=tuple(
+            ConsumptionReading.from_api(
+                {
+                    "id": reading_id,
+                    "consumptionMeterId": meter_id,
+                    "readingDate": "2025-12-31T23:00:00Z",
+                    "currentValue": value,
+                }
+            )
+            for reading_id, meter_id, value in ((9876, 1234, 0.7), (9877, 5678, 80))
+        ),
         monthly={
             MeterKind.WARM_WATER: (
                 MonthlyConsumption(
@@ -36,14 +51,27 @@ async def test_diagnostics_include_counts_but_no_identifiers():
         )
     )
 
-    diagnostics = await async_get_config_entry_diagnostics(SimpleNamespace(), entry)
+    diagnostics = await async_get_config_entry_diagnostics(
+        SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Berlin")), entry
+    )
 
     assert diagnostics == {
         "api_status": "ok",
         "last_successful_update": "2026-01-02T03:04:00+00:00",
+        "billing_coverage": {
+            kind: {
+                "latest_billing_month": "2025-12",
+                "oldest_meter_billing_month": "2025-12",
+                "meter_count": 1,
+                "meters_with_history": 1,
+                "meters_in_latest_month": 1,
+                "is_estimated": False,
+            }
+            for kind in ("warm_water", "heating")
+        },
         "meter_types": {"warm_water": 1, "heating": 1},
         "meter_count": 2,
-        "reading_count": 1,
+        "reading_count": 2,
         "months": {"warm_water": 1, "heating": 1},
         "billing_months": {"warm_water": ["2025-12"], "heating": ["2025-12"]},
         "warm_water_energy_billing_months": ["2025-12"],

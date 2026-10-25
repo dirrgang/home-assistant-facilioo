@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
@@ -17,13 +18,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import FaciliooRuntimeData
 from .const import DOMAIN, NAME
 from .coordinator import FaciliooCoordinator
-from .models import ConsumptionData, MeterKind
+from .models import ConsumptionData, MeterKind, billing_coverage
 from .statistics import statistic_id
 
 
@@ -31,9 +33,10 @@ from .statistics import statistic_id
 class FaciliooSensorDescription(SensorEntityDescription):
     """Description with value and attribute callbacks."""
 
-    value_fn: Callable[[ConsumptionData], Decimal | None]
+    value_fn: Callable[[ConsumptionData], Decimal | datetime | str | None]
     attrs_fn: Callable[[ConsumptionData], dict[str, Any]] | None = None
-    kind: MeterKind
+    kind: MeterKind | None
+    retain_on_failure: bool = False
 
 
 def _latest_value(kind: MeterKind) -> Callable[[ConsumptionData], Decimal | None]:
@@ -57,6 +60,28 @@ def _latest_attrs(kind: MeterKind) -> Callable[[ConsumptionData], dict[str, Any]
 
 
 BASE_DESCRIPTIONS = (
+    FaciliooSensorDescription(
+        key="last_successful_import",
+        translation_key="last_successful_import",
+        kind=None,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        retain_on_failure=True,
+        value_fn=lambda data: data.updated_at,
+    ),
+    *(
+        FaciliooSensorDescription(
+            key=f"{kind.value}_billing_month",
+            translation_key=f"{kind.value}_billing_month",
+            kind=kind,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            retain_on_failure=True,
+            value_fn=lambda data, selected=kind: (
+                latest.month.isoformat()[:7] if (latest := data.latest(selected)) else None
+            ),
+        )
+        for kind in (MeterKind.WARM_WATER, MeterKind.HEATING)
+    ),
     FaciliooSensorDescription(
         key="warm_water_total",
         translation_key="warm_water_total",
@@ -152,7 +177,7 @@ async def async_setup_entry(
     async_add_entities(
         FaciliooSensor(runtime.coordinator, entry, description)
         for description in descriptions
-        if description.kind in kinds
+        if (description.kind is None or description.kind in kinds)
         and (
             description.key != "warm_water_energy_total"
             or description.value_fn(runtime.coordinator.data) is not None
@@ -206,12 +231,29 @@ class FaciliooSensor(CoordinatorEntity[FaciliooCoordinator], SensorEntity):
             }
 
     @property
-    def native_value(self) -> Decimal | None:
+    def available(self) -> bool:
+        """Keep last-success information readable during a failed refresh."""
+        if self.entity_description.retain_on_failure:
+            return self.coordinator.data is not None
+        return super().available
+
+    @property
+    def native_value(self) -> Decimal | datetime | str | None:
         return self.entity_description.value_fn(self.coordinator.data)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         attributes = dict(self._attr_extra_state_attributes or {})
+        if self.entity_description.retain_on_failure:
+            attributes["last_refresh_success"] = self.coordinator.last_update_success
+            if self.entity_description.kind is not None:
+                attributes.update(
+                    billing_coverage(
+                        self.coordinator.data,
+                        self.entity_description.kind,
+                        self.coordinator.hass.config.time_zone,
+                    )
+                )
         if self.entity_description.attrs_fn:
             attributes.update(self.entity_description.attrs_fn(self.coordinator.data))
         return attributes or None

@@ -30,6 +30,9 @@
   },
   "entity": {
     "sensor": {
+      "last_successful_import": {"name": "Letzter erfolgreicher Datenimport"},
+      "warm_water_billing_month": {"name": "Warmwasser — neuester verfügbarer Abrechnungsmonat"},
+      "heating_billing_month": {"name": "Heizenergie — neuester verfügbarer Abrechnungsmonat"},
       "warm_water_total": {"name": "Warmwasser — kumulierter Gesamtstand"},
       "heating_energy_total": {"name": "Heizenergie — kumulierter Gesamtstand"},
       "warm_water_energy_total": {"name": "Warmwasserenergie — kumulierter Gesamtstand"},
