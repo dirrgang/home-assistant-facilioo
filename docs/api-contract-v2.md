@@ -120,3 +120,6 @@ Automatic CI downloads would make unrelated changes depend on API availability,
 DNS, upstream edits and rate limits. Therefore source refresh is an explicit reviewed
 development step, while CI stays deterministic and offline. Passing CI checks the
 pinned contract and client, not future upstream drift or real-account compatibility.
+
+The separate [MFA and session investigation](mfa-session-design.md) reviews the
+challenge/refresh contract and records the evidence gates for future MFA support.
