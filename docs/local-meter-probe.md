@@ -2,6 +2,8 @@
 
 This developer utility supports the evidence gates in [selection design](unit-meter-selection-design.md)
 and [#65](https://github.com/dirrgang/home-assistant-facilioo/issues/65).
+For another portal, follow the [compatibility protocol](compatibility-verification.md);
+the probe does not establish end-to-end Home Assistant compatibility.
 It does not enable selection in Home Assistant. Run it manually only for your own
 consenting account. Automated tests use invented responses without a network fallback.
 
@@ -11,7 +13,7 @@ consenting account. Automated tests use invented responses without a network fal
 
 Use a real interactive terminal. Enter a month with known readings, then email and
 password at the hidden prompts. Credentials are not command arguments or environment
-variables. No secret input is echoed. The script refuses non-terminal input and
+variables. If hidden input is unavailable, the probe aborts instead of using echoed input. The script refuses non-terminal input and
 stops if a full Platform login cannot be recognized. MFA is not completed or bypassed.
 
 The only allowed operations are POST login (`skipMultiFactorAuthentication: false`),
@@ -21,7 +23,7 @@ there are no meter/reading writes, refresh/logout calls, HA access or configurat
 changes. Credential/access-token state and raw responses remain in process memory,
 not files. TLS defaults are retained and environment proxies are disabled.
 
-The script reads one month of account readings and compares each recognized warm-water
+The default mode reads one month of account readings and compares each recognized warm-water
 meter's filtered query, plus each represented unit's query, with the matching rows
 from that baseline. Unit expectations include every listed meter kind assigned to
 that unit, not just warm water. Meter classification follows the existing integration.
@@ -47,7 +49,6 @@ semantics can all matter. Current grouping is not proof of historical membership
 replacement continuity or physical independence of main/submeters. A person familiar
 with the installation must still identify whether these are multiple independent
 meters in one dwelling, different dwellings, or replacement/overlapping meters.
-
 
 If the month search is unexpectedly empty despite known readings, run a bounded
 comparison without the `dates` filter:

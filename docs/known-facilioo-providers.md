@@ -114,6 +114,10 @@ historical section when evidence changes.
 
 ## Contributing evidence or compatibility reports
 
+Follow the [verification protocol](compatibility-verification.md) for account-specific
+checks, minimized synthetic evidence and the distinction between API and end-to-end
+results. Existing status definitions here remain authoritative.
+
 To add or update a provider, open a documentation pull request with a
 **first-party source URL**, the exact product or relationship it describes,
 the source's publication date if available, and the **date you reviewed it**.

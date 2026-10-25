@@ -189,3 +189,53 @@ def test_no_data_does_not_claim_filter_verification_and_values_are_compared_in_m
         "expected_rows": 1,
         "returned_rows": 1,
     }
+
+
+async def test_getpass_echo_fallback_is_refused_before_any_network_call(monkeypatch):
+    import getpass
+    import warnings
+    from unittest.mock import Mock
+
+    from scripts.probe_meter_selection import run
+
+    def unsafe_prompt(_prompt):
+        warnings.warn("synthetic unsupported terminal", getpass.GetPassWarning, stacklevel=2)
+        raise AssertionError("Echoed credential input must never be reached")
+
+    monkeypatch.setattr("scripts.probe_meter_selection.getpass.getpass", unsafe_prompt)
+    session = Mock()
+    monkeypatch.setattr("scripts.probe_meter_selection.aiohttp.ClientSession", session)
+    with pytest.raises(getpass.GetPassWarning):
+        await run("2026-01")
+    session.assert_not_called()
+
+
+def test_non_terminal_invocation_refuses_credentials(monkeypatch, capsys, tmp_path):
+    from unittest.mock import Mock
+
+    from scripts.probe_meter_selection import main
+
+    monkeypatch.setattr("sys.argv", ["probe", "--output", str(tmp_path / "summary.json")])
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+    secret_input = Mock()
+    monkeypatch.setattr("scripts.probe_meter_selection.getpass.getpass", secret_input)
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2
+    secret_input.assert_not_called()
+    assert "interaktiven Terminal" in capsys.readouterr().err
+
+
+async def test_manual_probe_enforces_request_and_page_bounds():
+    api = ReadOnlyApi(Session([]))
+    api.requests = 100
+    api.token = "synthetic"
+    with pytest.raises(ProbeError, match="100"):
+        await api.page(METERS)
+    assert api.session.calls == []
+    session = Session([Response(_page([], number=n, more=True)) for n in range(1, 21)])
+    api = ReadOnlyApi(session)
+    api.token = "synthetic"
+    with pytest.raises(ProbeError, match="20 Seiten"):
+        await api.page(METERS)
+    assert len(session.calls) == 20

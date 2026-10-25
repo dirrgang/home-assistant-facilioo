@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import warnings
 from collections import Counter
 from contextlib import suppress
 from datetime import date, datetime, timedelta
@@ -283,8 +284,11 @@ def write_report(path: Path, report: dict[str, Any]) -> None:
 
 
 async def run(month: str | None) -> dict[str, Any]:
-    email = getpass.getpass("Facilioo E-Mail (unsichtbare Eingabe): ")
-    password = getpass.getpass("Passwort (unsichtbare Eingabe): ")
+    with warnings.catch_warnings():
+        # Refuse getpass's echoed fallback even on an unusual apparent TTY.
+        warnings.simplefilter("error", getpass.GetPassWarning)
+        email = getpass.getpass("Facilioo E-Mail (unsichtbare Eingabe): ")
+        password = getpass.getpass("Passwort (unsichtbare Eingabe): ")
     async with aiohttp.ClientSession(
         timeout=aiohttp.ClientTimeout(total=30), trust_env=False
     ) as session:
