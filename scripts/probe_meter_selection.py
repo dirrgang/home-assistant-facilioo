@@ -16,7 +16,7 @@ import re
 import sys
 from collections import Counter
 from contextlib import suppress
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -187,7 +187,7 @@ def compare(expected: list[dict], actual: list[dict]) -> dict[str, Any]:
     }
 
 
-async def probe(api: ReadOnlyApi, month: str) -> dict[str, Any]:
+async def probe(api: ReadOnlyApi, month: str | None) -> dict[str, Any]:
     meters = await api.page(METERS)
     types = await api.page(TYPES)
     try:
@@ -230,7 +230,9 @@ async def probe(api: ReadOnlyApi, month: str) -> dict[str, Any]:
                 },
             }
         )
-    body = {"dates": [month], "orderBy": ["readingDate asc"]}
+    body: dict[str, Any] = {"orderBy": ["readingDate asc"]}
+    if month is not None:
+        body["dates"] = [month]
     baseline = await api.page(READINGS, body)
     if any(not valid_id(row.get("consumptionMeterId")) for row in baseline):
         raise ProbeError("Lesungszuordnung fehlt; Vergleich abgebrochen.")
@@ -247,9 +249,21 @@ async def probe(api: ReadOnlyApi, month: str) -> dict[str, Any]:
         actual = await api.page(READINGS, {**body, "unitId": unit_id})
         expected = [row for row in baseline if row["consumptionMeterId"] in ids]
         comparisons.append({"filter": "unit", "target": label, **compare(expected, actual)})
+    reading_months: Counter[str] = Counter()
+    for row in baseline:
+        try:
+            parsed = datetime.fromisoformat(row["readingDate"].replace("Z", "+00:00"))
+            reading_months[parsed.strftime("%Y-%m")] += 1
+        except KeyError, TypeError, AttributeError, ValueError:
+            reading_months["invalid_or_missing"] += 1
     return {
         "schema_version": 1,
+        "mode": "one_month" if month is not None else "bounded_available_history",
         "month": month,
+        "meter_count": len(meters),
+        "meter_kinds": dict(Counter(meter.kind.value for meter in resolved)),
+        "baseline_reading_count": len(baseline),
+        "reading_date_months": dict(sorted(reading_months.items())),
         "warm_water_meters": descriptions,
         "comparisons": comparisons,
         "request_count": api.requests,
@@ -268,7 +282,7 @@ def write_report(path: Path, report: dict[str, Any]) -> None:
         output.write("\n")
 
 
-async def run(month: str) -> dict[str, Any]:
+async def run(month: str | None) -> dict[str, Any]:
     email = getpass.getpass("Facilioo E-Mail (unsichtbare Eingabe): ")
     password = getpass.getpass("Passwort (unsichtbare Eingabe): ")
     async with aiohttp.ClientSession(
@@ -286,6 +300,11 @@ async def run(month: str) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--month", help="Bekannter Lesungsmonat im Format YYYY-MM")
+    selection.add_argument(
+        "--all-history", action="store_true", help="Ohne Monatsfilter, begrenzt auf 20 Seiten"
+    )
     args = parser.parse_args()
     if not sys.stdin.isatty() or not sys.stderr.isatty():
         parser.exit(
@@ -297,9 +316,18 @@ def main() -> None:
     )
     default = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
     try:
-        month = input(f"Monat mit bekannten Lesungen [{default}]: ").strip() or default
-        if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", month):
-            raise ProbeError("Monat muss YYYY-MM sein.")
+        if args.all_history:
+            month = None
+            print("Ohne Monatsfilter: maximal 20 Seiten pro Abfrage; Bericht ohne Verbrauchswerte.")
+        else:
+            month = (
+                args.month
+                or input(f"Monat mit bekannten Lesungen [{default}]: ").strip()
+                or default
+            )
+            print(f"Testmonat: {month}")
+            if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", month):
+                raise ProbeError("Monat muss YYYY-MM sein.")
         if args.output.exists():
             raise ProbeError(
                 "Berichtsdatei existiert bereits; bitte einen neuen Dateinamen verwenden."

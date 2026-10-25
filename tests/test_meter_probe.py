@@ -118,7 +118,8 @@ async def test_repeated_ids_and_incomplete_pages_abort():
         await api.page(METERS)
 
 
-async def test_report_contains_only_aliases_shapes_counts_and_comparisons(tmp_path):
+@pytest.mark.parametrize("month", ["2026-09", None])
+async def test_report_contains_only_aliases_shapes_counts_and_comparisons(tmp_path, month):
     # Include a heating meter in the same unit: a unit query must compare all kinds.
     meters = [
         {
@@ -144,7 +145,12 @@ async def test_report_contains_only_aliases_shapes_counts_and_comparisons(tmp_pa
     ]
     api = ReadOnlyApi(Session([]))
     api.page = AsyncMock(side_effect=[meters, [], rows, [rows[0]], [rows[1]], [rows[0], rows[2]]])
-    report = await probe(api, "2026-09")
+    report = await probe(api, month)
+    assert report["baseline_reading_count"] == 3
+    assert report["meter_kinds"] == {"warm_water": 2, "heating": 1}
+    assert report["reading_date_months"] == {"2026-09": 3}
+    for call in api.page.await_args_list[2:]:
+        assert ("dates" in call.args[1]) == (month is not None)
     assert [item["status"] for item in report["comparisons"]] == ["equal"] * 3
     assert report["comparisons"][-1]["expected_rows"] == 2
     assert report["warm_water_meters"][0]["unit"] == "Einheit 1"

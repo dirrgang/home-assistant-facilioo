@@ -47,3 +47,20 @@ semantics can all matter. Current grouping is not proof of historical membership
 replacement continuity or physical independence of main/submeters. A person familiar
 with the installation must still identify whether these are multiple independent
 meters in one dwelling, different dwellings, or replacement/overlapping meters.
+
+
+If the month search is unexpectedly empty despite known readings, run a bounded
+comparison without the `dates` filter:
+
+```sh
+.venv/bin/python -m scripts.probe_meter_selection --all-history \
+  --output /tmp/facilioo-meter-history-summary.json
+```
+
+This reads up to the same page/request limits for available history and compares
+meter/unit filters without `dates`. The report additionally contains total meter
+counts by recognized kind and counts by the original reading timestamp's calendar
+month. Those labels are not derived local billing months and may differ at month
+boundaries; no values or exact timestamps are exported. An empty month-filtered
+response alone is not proof that the account has no readings. A successful unfiltered
+comparison would still not establish historical unit-membership semantics.
