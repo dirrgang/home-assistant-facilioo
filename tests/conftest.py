@@ -19,3 +19,9 @@ def meter_payload() -> dict[str, Any]:
 @pytest.fixture
 def reading_payload() -> dict[str, Any]:
     return json.loads((FIXTURES / "readings.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture(params=json.loads((FIXTURES / "mfa_responses.json").read_text(encoding="utf-8")))
+def mfa_payload(request) -> dict[str, Any]:
+    """Synthetic signals for the existing defensive MFA detection, not a verified flow."""
+    return dict(request.param)

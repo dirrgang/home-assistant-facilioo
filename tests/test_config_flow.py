@@ -6,6 +6,12 @@ import pytest
 from homeassistant.config_entries import SOURCE_REAUTH, SOURCE_USER
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.facilioo.api import (
+    FaciliooAuthenticationError,
+    FaciliooAuthorizationError,
+    FaciliooConnectionError,
+    FaciliooMfaRequiredError,
+)
 from custom_components.facilioo.config_flow import legacy_account_unique_id
 from custom_components.facilioo.const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
@@ -79,6 +85,51 @@ async def test_errors_are_presented(hass, enable_custom_integrations):
         )
     assert result["type"] == "form"
     assert result["errors"] == {"base": "cannot_connect"}
+
+
+@pytest.mark.parametrize("source", [SOURCE_USER, SOURCE_REAUTH])
+@pytest.mark.parametrize(
+    ("exception", "error_key"),
+    [
+        (FaciliooMfaRequiredError, "mfa_required"),
+        (FaciliooAuthenticationError, "invalid_auth"),
+        (FaciliooAuthorizationError, "not_authorized"),
+        (FaciliooConnectionError, "cannot_connect"),
+    ],
+)
+async def test_login_failures_show_safe_specific_errors(
+    hass, enable_custom_integrations, mock_setup_entry, source, exception, error_key, caplog
+):
+    credentials = {CONF_EMAIL: "resident@example.test", CONF_PASSWORD: "secret-password"}
+    context = {"source": source}
+    if source == SOURCE_REAUTH:
+        entry = MockConfigEntry(domain=DOMAIN, unique_id=str(ACCOUNT_ID), data=credentials)
+        entry.add_to_hass(hass)
+        context["entry_id"] = entry.entry_id
+
+    with patch("custom_components.facilioo.config_flow.FaciliooApiClient", autospec=True) as client:
+        client.return_value.async_login.side_effect = exception(
+            "resident@example.test secret-password synthetic-challenge"
+        )
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context=context, data=credentials
+        )
+        if source == SOURCE_REAUTH:
+            result = await hass.config_entries.flow.async_configure(result["flow_id"], credentials)
+
+    assert result["type"] == "form"
+    assert result["step_id"] == ("user" if source == SOURCE_USER else "reauth_confirm")
+    assert result["errors"] == {"base": error_key}
+    client.return_value.async_get_resolved_meters.assert_not_awaited()
+    mock_setup_entry.assert_not_awaited()
+    for private_value in (*credentials.values(), "synthetic-challenge"):
+        assert private_value not in str(result["errors"])
+        assert private_value not in str(result.get("description_placeholders", {}))
+        assert private_value not in caplog.text
+    if source == SOURCE_USER:
+        assert not hass.config_entries.async_entries(DOMAIN)
+    else:
+        assert entry.data == credentials
 
 
 async def test_authorization_error_is_not_presented_as_invalid_credentials(

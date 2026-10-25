@@ -13,6 +13,7 @@ from custom_components.facilioo.api import (
     FaciliooAuthenticationError,
     FaciliooAuthorizationError,
     FaciliooConnectionError,
+    FaciliooMfaRequiredError,
     FaciliooRateLimitError,
     FaciliooResponseError,
 )
@@ -112,6 +113,55 @@ async def test_wrong_credentials_are_safe():
         await client.async_login()
     assert "secret-password" not in str(error.value)
     assert "resident@example.test" not in str(error.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [200, 400, 409])
+async def test_mfa_login_stops_without_bypass_or_followup_requests(status, mfa_payload, caplog):
+    # These invented payloads exercise current heuristics, not documented challenge DTOs.
+    mfa_payload["detail"] = "resident@example.test secret-password synthetic-challenge"
+    session = FakeSession([FakeResponse(mfa_payload, status=status, text=json.dumps(mfa_payload))])
+    client = FaciliooApiClient(session, "resident@example.test", "secret-password")
+
+    with pytest.raises(FaciliooMfaRequiredError) as error:
+        await client.async_login()
+
+    assert client.account_id is None
+    assert client._token is None
+    assert len(session.calls) == 1
+    method, url, kwargs = session.calls[0]
+    assert method == "POST"
+    assert url.endswith("/api/auth/login")
+    assert kwargs["json"]["skipMultiFactorAuthentication"] is False
+    assert "Authorization" not in kwargs["headers"]
+    for private_value in ("resident@example.test", "secret-password", "synthetic-challenge"):
+        assert private_value not in str(error.value)
+        assert private_value not in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("response", "exception"),
+    [
+        (FakeResponse(status=400, text="Invalid credentials"), FaciliooAuthenticationError),
+        (FakeResponse(status=409, text="Login rejected"), FaciliooAuthenticationError),
+        (FakeResponse(status=401), FaciliooAuthenticationError),
+        (FakeResponse(status=403), FaciliooAuthorizationError),
+        (TimeoutError(), FaciliooConnectionError),
+        (FakeResponse({}), FaciliooResponseError),
+    ],
+)
+async def test_non_mfa_login_failures_remain_distinct(response, exception):
+    session = FakeSession([response])
+    client = FaciliooApiClient(session, "resident@example.test", "secret-password")
+
+    with pytest.raises(exception) as error:
+        await client.async_login()
+
+    # MFA subclasses AuthenticationError; assert the exact type to catch misclassification.
+    assert type(error.value) is exception
+    assert len(session.calls) == 1
+    assert session.calls[0][2]["json"]["skipMultiFactorAuthentication"] is False
 
 
 @pytest.mark.asyncio
