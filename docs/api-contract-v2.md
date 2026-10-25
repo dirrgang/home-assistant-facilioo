@@ -123,3 +123,6 @@ pinned contract and client, not future upstream drift or real-account compatibil
 
 The separate [MFA and session investigation](mfa-session-design.md) reviews the
 challenge/refresh contract and records the evidence gates for future MFA support.
+
+The [extended-readings endpoint decision](extended-readings-decision.md) compares
+all four reading routes and retains ordinary search for the current sync scope.

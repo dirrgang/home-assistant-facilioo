@@ -91,7 +91,7 @@ challenge because no resident-account challenge flow has been verified.
 ## Features
 
 - Warm-water consumption in m³
-- Warm-water energy equivalent in kWh when supplied by Facilioo extended readings
+- Warm-water energy equivalent in kWh when supplied by Facilioo readings
 - Heating energy in kWh
 - Latest monthly costs in Home Assistant's configured currency
 - Cumulative total sensors with `state_class: total`
@@ -143,7 +143,7 @@ as its cost statistic. Home Assistant explicitly accepts energy-class statistics
 source, so the integration keeps the technically correct `energy` device class and does not pretend
 that the Facilioo value is a physical gas-volume reading.
 
-If Facilioo's extended readings provide `currentValueInDifferentUnitOfMeasure` for every imported
+If Facilioo's readings provide `currentValueInDifferentUnitOfMeasure` for every imported
 warm-water month, the integration also publishes **Facilioo warm water energy history (Energy
 Dashboard gas source)** in kWh. It can be added as a second gas source for domestic hot-water energy,
 with the warm-water cost history selected as its cost statistic. This value comes directly from

@@ -61,6 +61,24 @@ FIELDS = {
 }
 
 
+# Separate bounded research profile; the runtime client profile remains unchanged.
+READINGS_REVIEW_OPERATIONS = {
+    "/api/consumption-readings": "get",
+    "/api/consumption-readings/search": "post",
+    "/api/consumption-readings-extended": "get",
+    "/api/consumption-readings-extended/search": "post",
+}
+READINGS_REVIEW_FIELDS = dict.fromkeys(
+    (
+        "ConsumptionReadingRead",
+        "ConsumptionReadingExtended",
+        "ConsumptionReadingSearchRequest",
+        "PaginatedListOfConsumptionReadingRead",
+        "PaginatedListOfConsumptionReadingExtended",
+    )
+)
+
+
 def _without_annotations(value: Any) -> Any:
     """Retain constraints, but never copy upstream example/default response data."""
     if isinstance(value, dict):
@@ -74,14 +92,15 @@ def _without_annotations(value: Any) -> Any:
     return value
 
 
-def extract(raw: bytes, retrieved_on: str) -> dict[str, Any]:
+def extract(raw: bytes, retrieved_on: str, *, readings_review: bool = False) -> dict[str, Any]:
     """Produce a deterministic, source-hashed contract projection; fail on missing fields."""
     date.fromisoformat(retrieved_on)
     source = json.loads(raw)
     if source["openapi"] != "3.0.1" or source["info"]["version"] != "v2.0":
         raise ValueError("Review the changed upstream specification version before extraction")
     schemas = {}
-    for name, fields in FIELDS.items():
+    selected_fields = READINGS_REVIEW_FIELDS if readings_review else FIELDS
+    for name, fields in selected_fields.items():
         original = source["components"]["schemas"][name]
         selected = original["properties"] if fields is None else fields
         schema = _without_annotations(original)
@@ -95,7 +114,8 @@ def extract(raw: bytes, retrieved_on: str) -> dict[str, Any]:
             schema["required"] = [key for key in original.get("required", []) if key in fields]
         schemas[name] = schema
     paths = {}
-    for path, method in OPERATIONS.items():
+    operations = READINGS_REVIEW_OPERATIONS if readings_review else OPERATIONS
+    for path, method in operations.items():
         operation = source["paths"][path][method]
         retained = {
             "parameters": _without_annotations(operation.get("parameters", [])),
@@ -112,7 +132,11 @@ def extract(raw: bytes, retrieved_on: str) -> dict[str, Any]:
             "sha256": hashlib.sha256(raw).hexdigest(),
             "bytes": len(raw),
             "upstream_info_version": source["info"]["version"],
-            "scope": "Client-used response fields, request schemas and pagination; not full DTOs",
+            "scope": (
+                "Ordinary/extended readings research: full reading DTOs and four read operations"
+                if readings_review
+                else "Client-used response fields, request schemas and pagination; not full DTOs"
+            ),
         },
         "openapi": source["openapi"],
         "paths": paths,
@@ -128,8 +152,13 @@ def main() -> None:
     parser.add_argument(
         "--check", action="store_true", help="Compare without overwriting the snapshot"
     )
+    parser.add_argument(
+        "--readings-review", action="store_true", help="Compare all four reading routes"
+    )
     args = parser.parse_args()
-    result = extract(args.source.read_bytes(), args.retrieved_on)
+    result = extract(
+        args.source.read_bytes(), args.retrieved_on, readings_review=args.readings_review
+    )
     if args.check:
         if result != json.loads(args.output.read_text(encoding="utf-8")):
             parser.exit(

@@ -1,0 +1,690 @@
+{
+  "components": {
+    "schemas": {
+      "ConsumptionReadingExtended": {
+        "additionalProperties": false,
+        "properties": {
+          "averageReferenceValue": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "averageReferenceValueInDifferentUnitOfMeasure": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "checkDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "checkedByAccountId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "consumerPartyId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "consumptionMeterId": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "costPercentageDifferenceToLastYear": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "costs": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "created": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "currentValue": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "currentValueInDifferentUnitOfMeasure": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "deleted": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "edited": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "executedDeliveryDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "externalId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "fileId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          },
+          "isEstimated": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "lastModified": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "readerAccountId": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "readingDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scheduledDeliveryDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "valuePercentageDifferenceToLastYear": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "wasChecked": {
+            "type": "boolean"
+          },
+          "wasDelivered": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "consumptionMeterId",
+          "id",
+          "readerAccountId",
+          "readingDate",
+          "wasChecked",
+          "wasDelivered"
+        ],
+        "type": "object"
+      },
+      "ConsumptionReadingRead": {
+        "additionalProperties": false,
+        "properties": {
+          "averageReferenceValue": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "averageReferenceValueInDifferentUnitOfMeasure": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "checkDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "checkedByAccountId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "consumerPartyId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "consumptionMeterId": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "costs": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "created": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "currentValue": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "currentValueInDifferentUnitOfMeasure": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "deleted": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "edited": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "executedDeliveryDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "externalId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "fileId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          },
+          "isEstimated": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "lastModified": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "readerAccountId": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "readingDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scheduledDeliveryDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "wasChecked": {
+            "type": "boolean"
+          },
+          "wasDelivered": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "consumptionMeterId",
+          "id",
+          "readerAccountId",
+          "readingDate",
+          "wasChecked",
+          "wasDelivered"
+        ],
+        "type": "object"
+      },
+      "ConsumptionReadingSearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "changedSince": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "consumptionMeterId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "createdFrom": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dates": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "ids": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "lastModifiedFrom": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "lastModifiedUntil": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "orderBy": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "searchTerm": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PaginatedListOfConsumptionReadingExtended": {
+        "additionalProperties": false,
+        "properties": {
+          "hasNextPage": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionReadingExtended"
+            },
+            "type": "array"
+          },
+          "pageNumber": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "pageSize": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalCount": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hasNextPage",
+          "hasPreviousPage",
+          "items",
+          "pageNumber",
+          "pageSize",
+          "totalCount",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PaginatedListOfConsumptionReadingRead": {
+        "additionalProperties": false,
+        "properties": {
+          "hasNextPage": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "readOnly": true,
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConsumptionReadingRead"
+            },
+            "type": "array"
+          },
+          "pageNumber": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "pageSize": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalCount": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "readOnly": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hasNextPage",
+          "hasPreviousPage",
+          "items",
+          "pageNumber",
+          "pageSize",
+          "totalCount",
+          "totalPages"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/api/consumption-readings": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "PageSize",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "PageNumber",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "SortByAttributeName",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "AscendingOrder",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Accept-Language",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "api-version",
+            "schema": {
+              "default": "2.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/consumption-readings-extended": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "PageSize",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "PageNumber",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Accept-Language",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "api-version",
+            "schema": {
+              "default": "2.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingExtended"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingExtended"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingExtended"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/consumption-readings-extended/search": {
+      "post": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "PageSize",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "PageNumber",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Accept-Language",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "api-version",
+            "schema": {
+              "default": "2.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ConsumptionReadingSearchRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingExtended"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/consumption-readings/search": {
+      "post": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "PageSize",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "PageNumber",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Accept-Language",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "api-version",
+            "schema": {
+              "default": "2.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ConsumptionReadingSearchRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfConsumptionReadingRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "bytes": 4354131,
+    "retrieved_on": "2026-10-25",
+    "scope": "Ordinary/extended readings research: full reading DTOs and four read operations",
+    "sha256": "121bb1bf36ad99b3c2febc9ebe1437ce73853c82d478015b43c81aa6af1d4408",
+    "upstream_info_version": "v2.0",
+    "url": "https://api.facilioo.de/swagger/v2.0/swagger.json"
+  }
+}
