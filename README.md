@@ -123,6 +123,10 @@ Entities are created only when the corresponding source meter exists:
 | Warm-water/heating cost — latest billing month | Newest monthly cost | Enabled |
 | Warm-water/heating cost — cumulative total | Sum of available costs | Disabled |
 
+Supported meters visible to the account are combined by consumption kind. Unit or meter
+selection is not currently available; see the [selection design](docs/unit-meter-selection-design.md)
+for the proposed boundaries and historical-data considerations.
+
 No cold-water entity is invented. Unknown meter types and units are ignored without preventing
 supported meters from working.
 

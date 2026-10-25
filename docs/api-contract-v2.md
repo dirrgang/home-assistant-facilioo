@@ -126,3 +126,6 @@ challenge/refresh contract and records the evidence gates for future MFA support
 
 The [extended-readings endpoint decision](extended-readings-decision.md) compares
 all four reading routes and retains ordinary search for the current sync scope.
+
+The [unit and meter selection design](unit-meter-selection-design.md) records the
+current aggregation boundary and a conditional migration-safe selection proposal.
