@@ -177,14 +177,12 @@ class FaciliooCoordinator(DataUpdateCoordinator[ConsumptionData]):
     async def _async_update_data(self) -> ConsumptionData:
         sync_started = datetime.now(UTC)
         cached, last_sync, last_full_sync = await self._async_load_sync_state()
-        reconcile = (
-            last_sync is None
-            or last_full_sync is None
-            or sync_started - last_full_sync >= RECONCILIATION_INTERVAL
-        )
-
         try:
-            if not reconcile:
+            if (
+                last_sync is not None
+                and last_full_sync is not None
+                and sync_started - last_full_sync < RECONCILIATION_INTERVAL
+            ):
                 changed_since = last_sync - SYNC_OVERLAP
                 meters, changed_readings = await self.client.async_fetch_changes(changed_since)
                 for reading in changed_readings:

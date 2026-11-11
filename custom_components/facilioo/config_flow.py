@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+# Home Assistant annotates data_schema with probatio (its voluptuous fork) since 2026.9.
+# The supported minimum (2026.4) still ships voluptuous, which HA accepts at runtime.
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.core import HomeAssistant
@@ -58,7 +60,7 @@ class FaciliooConfigFlow(ConfigFlow, domain=DOMAIN):
             errors["base"] = error or "unknown_response"
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
+            data_schema=vol.Schema(  # type: ignore[arg-type]  # see import note
                 {
                     vol.Required(CONF_EMAIL): str,
                     vol.Required(CONF_PASSWORD): str,
@@ -97,7 +99,7 @@ class FaciliooConfigFlow(ConfigFlow, domain=DOMAIN):
             errors["base"] = error or "unknown_response"
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema(
+            data_schema=vol.Schema(  # type: ignore[arg-type]  # see import note
                 {
                     vol.Required(CONF_EMAIL, default=entry.data[CONF_EMAIL]): str,
                     vol.Required(CONF_PASSWORD): str,

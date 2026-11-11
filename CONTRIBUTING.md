@@ -3,8 +3,10 @@
 Thank you for helping improve Home Assistant Facilioo.
 
 1. Install [mise](https://mise.jdx.dev/) and run `mise run setup` from a Linux or WSL checkout.
-2. Make focused changes with type annotations and asynchronous I/O.
-3. Run `mise run check` before committing. Use `mise run fix` to apply Ruff fixes and formatting.
+2. Make focused changes with complete type annotations and asynchronous I/O. Prefer narrowing over
+   `# type: ignore`; a necessary ignore names its error code and the reason.
+3. Run `mise run check` before committing (Ruff, strict mypy on `custom_components/facilioo`, tests).
+   Use `mise run fix` to apply Ruff fixes and formatting.
    `mise run hooks` runs the same Git hooks as CI on all files, including a guard against
    committing credentials, Home Assistant storage, diagnostics downloads or API captures.
 4. Add tests for API/schema behavior and consumption/statistics semantics.

@@ -5,12 +5,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from collections.abc import Iterator
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.models import (
     StatisticData,
     StatisticMeanType,
@@ -21,6 +21,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.recorder import get_instance
 from homeassistant.helpers.storage import Store
 from homeassistant.util.unit_conversion import EnergyConverter, VolumeConverter
 
@@ -91,7 +92,7 @@ def _next_month(month: date) -> date:
     return date(month.year + (month.month == 12), month.month % 12 + 1, 1)
 
 
-def _month_range(first: date, last: date):
+def _month_range(first: date, last: date) -> Iterator[date]:
     month = first
     while month <= last:
         yield month
@@ -115,14 +116,13 @@ def build_statistics(
     """Build an exact cumulative series without erasing transiently omitted data."""
     if costs and different_unit:
         raise ValueError("A series cannot contain costs and consumption together")
-    current_values = {
-        item.month.isoformat(): (
+    current_values: dict[str, Decimal] = {}
+    for item in current:
+        value = (
             item.costs if costs else item.value_in_different_unit if different_unit else item.value
         )
-        for item in current
-        if (not costs or item.costs is not None)
-        and (not different_unit or item.value_in_different_unit is not None)
-    }
+        if value is not None:
+            current_values[item.month.isoformat()] = value
     if (
         different_unit
         and not previous

@@ -311,7 +311,10 @@ uv sync --group dev
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
+uv run mypy
 ```
+
+`mise run check` runs the same gates as CI.
 
 The Home Assistant test harness targets Linux. On Windows, run the commands in WSL or another
 Linux environment; a native Windows run cannot import Home Assistant's Unix-only runtime modules.
