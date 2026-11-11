@@ -1,5 +1,9 @@
 # Home Assistant Facilioo
 
+[![Release](https://img.shields.io/github/v/release/dirrgang/home-assistant-facilioo)](https://github.com/dirrgang/home-assistant-facilioo/releases/latest)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](#installation)
+[![Home Assistant validation](https://github.com/dirrgang/home-assistant-facilioo/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/dirrgang/home-assistant-facilioo/actions/workflows/validate.yml)
+
 [**Deutsch: Kurzüberblick**](#auf-deutsch) · [Installation](#installation) · [Energy Dashboard](#energy-dashboard-and-historical-statistics)
 
 Bring **monthly heating energy (kWh), warm-water consumption (m³), and available cost data**

@@ -48,3 +48,7 @@ python_version = "3.14"
 files = ["custom_components/facilioo"]
 strict = true
 warn_unreachable = true
+
+[tool.coverage.report]
+# Regression floor, not a target: CI fails if coverage drops noticeably below today's ~90 %.
+fail_under = 88
