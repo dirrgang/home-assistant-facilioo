@@ -1,9 +1,6 @@
 {
   "domain": "facilioo",
   "name": "Facilioo",
-  "categories": [
-    "energy.meters_monitoring"
-  ],
   "codeowners": [
     "@dirrgang"
   ],
