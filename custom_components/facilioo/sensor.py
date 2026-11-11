@@ -15,10 +15,9 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy, UnitOfVolume
+from homeassistant.const import EntityCategory, UnitOfEnergy, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -40,11 +39,19 @@ class FaciliooSensorDescription(SensorEntityDescription):
 
 
 def _latest_value(kind: MeterKind) -> Callable[[ConsumptionData], Decimal | None]:
-    return lambda data: data.latest(kind).value if data.latest(kind) else None
+    return lambda data: latest.value if (latest := data.latest(kind)) else None
 
 
 def _latest_cost(kind: MeterKind) -> Callable[[ConsumptionData], Decimal | None]:
-    return lambda data: data.latest(kind).costs if data.latest(kind) else None
+    return lambda data: latest.costs if (latest := data.latest(kind)) else None
+
+
+def _latest_billing_month(kind: MeterKind) -> Callable[[ConsumptionData], str | None]:
+    return lambda data: latest.month.isoformat()[:7] if (latest := data.latest(kind)) else None
+
+
+def _total_costs(kind: MeterKind) -> Callable[[ConsumptionData], Decimal | None]:
+    return lambda data: data.total_costs(kind)
 
 
 def _latest_attrs(kind: MeterKind) -> Callable[[ConsumptionData], dict[str, Any]]:
@@ -76,9 +83,7 @@ BASE_DESCRIPTIONS = (
             kind=kind,
             entity_category=EntityCategory.DIAGNOSTIC,
             retain_on_failure=True,
-            value_fn=lambda data, selected=kind: (
-                latest.month.isoformat()[:7] if (latest := data.latest(selected)) else None
-            ),
+            value_fn=_latest_billing_month(kind),
         )
         for kind in (MeterKind.WARM_WATER, MeterKind.HEATING)
     ),
@@ -170,7 +175,7 @@ async def async_setup_entry(
                     state_class=SensorStateClass.TOTAL,
                     suggested_display_precision=2,
                     entity_registry_enabled_default=False,
-                    value_fn=lambda data, selected=kind: data.total_costs(selected),
+                    value_fn=_total_costs(kind),
                 ),
             )
         )
@@ -207,27 +212,22 @@ class FaciliooSensor(CoordinatorEntity[FaciliooCoordinator], SensorEntity):
             model="Consumption account",
         )
         self._attr_extra_state_attributes = {}
+        kind = description.kind
+        if kind is None:
+            return
         if description.key in ("warm_water_total", "heating_energy_total"):
             self._attr_extra_state_attributes = {
-                "historical_statistic_id": statistic_id(entry.entry_id, description.kind),
-                "historical_cost_statistic_id": statistic_id(
-                    entry.entry_id, description.kind, costs=True
-                ),
+                "historical_statistic_id": statistic_id(entry.entry_id, kind),
+                "historical_cost_statistic_id": statistic_id(entry.entry_id, kind, costs=True),
             }
         elif description.key == "warm_water_energy_total":
             self._attr_extra_state_attributes = {
-                "historical_statistic_id": statistic_id(
-                    entry.entry_id, description.kind, different_unit=True
-                ),
-                "historical_cost_statistic_id": statistic_id(
-                    entry.entry_id, description.kind, costs=True
-                ),
+                "historical_statistic_id": statistic_id(entry.entry_id, kind, different_unit=True),
+                "historical_cost_statistic_id": statistic_id(entry.entry_id, kind, costs=True),
             }
         elif description.key.endswith("_cost_total"):
             self._attr_extra_state_attributes = {
-                "historical_statistic_id": statistic_id(
-                    entry.entry_id, description.kind, costs=True
-                )
+                "historical_statistic_id": statistic_id(entry.entry_id, kind, costs=True)
             }
 
     @property

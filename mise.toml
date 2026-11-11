@@ -28,6 +28,11 @@ run = [
     "uv run --no-sync ruff format .",
 ]
 
+[tasks.typecheck]
+description = "Run strict mypy on the integration"
+depends = ["sync"]
+run = "uv run --no-sync mypy"
+
 [tasks.test]
 description = "Run tests with coverage"
 depends = ["sync"]
@@ -40,4 +45,4 @@ run = "prek run --all-files --show-diff-on-failure"
 
 [tasks.check]
 description = "Run all quality gates"
-depends = ["lint", "test"]
+depends = ["lint", "typecheck", "test"]
