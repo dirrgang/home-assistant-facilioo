@@ -39,6 +39,13 @@ jobs:
             uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
             uv-${{ runner.os }}
 
+      - name: Record toolchain versions
+        run: |
+          mise --version
+          python --version
+          uv --version
+          prek --version
+
       - name: Run quality gates
         run: mise run check
 

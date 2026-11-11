@@ -16,6 +16,18 @@ Thank you for helping improve Home Assistant Facilioo.
 locked development environment, and installs the Git hook. Home Assistant's test harness targets
 Linux; native Windows cannot import its Unix-only runtime modules.
 
+Toolchain and runtime policy:
+
+- **Python**: `mise.toml` and `.python-version` select the `3.14` line and resolve to its newest
+  patch release, so security fixes arrive without a repository change. The floor `>=3.14.2` in
+  `pyproject.toml` is inherited from Home Assistant's own `Requires-Python`; raise it together with
+  the `homeassistant` dev dependency. `uv sync --locked` refuses an interpreter below the floor, so
+  CI cannot silently run on an unsupported patch; the CI log records the resolved versions.
+- **Dependencies**: `uv.lock` pins every Python package; Dependabot updates it weekly.
+- **Tools**: `mise.toml` pins exact uv and prek versions, and CI pins the mise version. A
+  `mise.lock` is deliberately not used: it would only add checksums for these tools, while the
+  Python line intentionally floats to the newest patch.
+
 Tests must fully mock HTTP. Never use a productive resident account in automated tests. Do not
 post credentials, tokens, personal names, addresses, real meter IDs, or unredacted API responses
 in commits, fixtures, issues, or pull requests.
