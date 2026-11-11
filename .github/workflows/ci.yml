@@ -16,6 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
     steps:
@@ -40,6 +41,9 @@ jobs:
 
       - name: Run quality gates
         run: mise run check
+
+      - name: Run hooks (private-data guard, file checks, zizmor)
+        run: mise run hooks
 
       - name: Minimize uv cache
         if: always()

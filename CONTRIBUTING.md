@@ -5,7 +5,12 @@ Thank you for helping improve Home Assistant Facilioo.
 1. Install [mise](https://mise.jdx.dev/) and run `mise run setup` from a Linux or WSL checkout.
 2. Make focused changes with type annotations and asynchronous I/O.
 3. Run `mise run check` before committing. Use `mise run fix` to apply Ruff fixes and formatting.
+   `mise run hooks` runs the same Git hooks as CI on all files, including a guard against
+   committing credentials, Home Assistant storage, diagnostics downloads or API captures.
 4. Add tests for API/schema behavior and consumption/statistics semantics.
+5. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, ...).
+   Releases are cut by merging the release-please PR, which bumps `pyproject.toml`,
+   `manifest.json` and `uv.lock` together and writes `CHANGELOG.md`; do not bump versions by hand.
 
 `mise run setup` provisions the repository-pinned Python, uv, and prek versions, synchronizes the
 locked development environment, and installs the Git hook. Home Assistant's test harness targets

@@ -1,0 +1,46 @@
+# Run with prek (https://github.com/j178/prek): `mise run setup` installs the Git hook,
+# `mise run hooks` checks all files (as CI does). Revisions are pinned to commit SHAs
+# and kept current by Dependabot (pre-commit ecosystem).
+exclude: ^tests/fixtures/
+repos:
+  - repo: local
+    hooks:
+      # .gitignore covers some of these, but not `git add -f`. Real Facilioo data must
+      # never be committed (SECURITY.md, CONTRIBUTING.md); use anonymized fixtures.
+      - id: forbid-private-data
+        name: forbid credentials, HA state and real API captures
+        description: Secrets, HA storage, diagnostics downloads, HAR captures and probe reports.
+        language: fail
+        entry: "Private data must not be committed (use anonymized files in tests/fixtures/):"
+        files: '(^|/)(secrets\.yaml|\.env(\..*)?|\.storage/.*|config_entry-[^/]*\.json|facilioo-meter[^/]*\.json)$|\.har$'
+
+      - id: ruff-check
+        name: ruff check
+        language: system
+        entry: mise exec -- uv run --locked --no-sync ruff check --force-exclude
+        args: [--fix]
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: mise exec -- uv run --locked --no-sync ruff format --force-exclude
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # v1.32.0
+    hooks:
+      - id: zizmor

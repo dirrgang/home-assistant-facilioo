@@ -9,4 +9,3 @@ No security email address is asserted by this project.
 
 If a credential was exposed, revoke or change it in Facilioo immediately and remove it from Home
 Assistant before collecting further logs.
-
