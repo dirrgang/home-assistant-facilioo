@@ -33,6 +33,11 @@ description = "Run tests with coverage"
 depends = ["sync"]
 run = "uv run --no-sync pytest --cov=custom_components.facilioo --cov-report=term-missing"
 
+[tasks.hooks]
+description = "Run all prek hooks on all files (private-data guard, file checks, zizmor)"
+depends = ["sync"]
+run = "prek run --all-files --show-diff-on-failure"
+
 [tasks.check]
 description = "Run all quality gates"
 depends = ["lint", "test"]

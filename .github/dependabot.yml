@@ -1,19 +1,46 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
+# Grouped weekly updates with a 7-day cooldown, so a freshly published (and possibly
+# compromised) release is not adopted immediately. Prefixes follow Conventional
+# Commits for release-please: development tooling updates do not trigger a release.
+# The mise.toml pins (Python, uv, prek) are not a Dependabot ecosystem.
 version: 2
 
 updates:
-  - package-ecosystem: "uv"
-    directory: "/"
+  - package-ecosystem: uv
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    # One group: homeassistant and pytest-homeassistant-custom-component must move together.
+    groups:
+      python:
+        patterns: ["*"]
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+    groups:
+      hooks:
+        patterns: ["*"]

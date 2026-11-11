@@ -1,0 +1,28 @@
+name: Release
+
+# release-please keeps a release PR open that bumps pyproject.toml, manifest.json and
+# uv.lock and updates CHANGELOG.md from Conventional Commits. Merging it creates the
+# vX.Y.Z tag and GitHub release that HACS consumes. Nothing is built or uploaded.
+on:
+  push:
+    branches: [master]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release PR / tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create tag and GitHub release
+      pull-requests: write # open and update the release PR
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
