@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.0...v0.3.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* remove manifest categories rejected by official Hassfest ([b258417](https://github.com/dirrgang/home-assistant-facilioo/commit/b258417cb1792e39e58378811079260870ceec35))
+* remove manifest categories rejected by official Hassfest ([6b880b1](https://github.com/dirrgang/home-assistant-facilioo/commit/6b880b14729f20d88430d6fd3a58132948c27863))
+
 ## [0.3.0](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.2.2...v0.3.0) (2026-11-11)
 
 
