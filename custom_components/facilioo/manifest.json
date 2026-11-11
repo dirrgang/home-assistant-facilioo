@@ -1,14 +1,20 @@
 {
   "domain": "facilioo",
   "name": "Facilioo",
-  "categories": ["energy.meters_monitoring"],
-  "codeowners": ["@dirrgang"],
+  "categories": [
+    "energy.meters_monitoring"
+  ],
+  "codeowners": [
+    "@dirrgang"
+  ],
   "config_flow": true,
-  "dependencies": ["recorder"],
+  "dependencies": [
+    "recorder"
+  ],
   "documentation": "https://github.com/dirrgang/home-assistant-facilioo",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/dirrgang/home-assistant-facilioo/issues",
   "requirements": [],
-  "version": "0.2.2"
+  "version": "0.3.0"
 }
