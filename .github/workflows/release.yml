@@ -3,10 +3,15 @@ name: Release
 # release-please keeps a release PR open that bumps pyproject.toml, manifest.json and
 # uv.lock and updates CHANGELOG.md from Conventional Commits. Merging it creates the
 # vX.Y.Z tag and GitHub release that HACS consumes. Nothing is built or uploaded.
+#
+# release-please authenticates as the repository's release GitHub App, not with
+# GITHUB_TOKEN: pull requests created with GITHUB_TOKEN do not trigger workflows, so CI
+# would not run on the release PR. Setup and key rotation: docs/release-automation.md.
 on:
   push:
     branches: [master]
 
+# GITHUB_TOKEN is not used; the App token carries the permissions listed below.
 permissions: {}
 
 concurrency:
@@ -18,11 +23,18 @@ jobs:
     name: Release PR / tag
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write # create tag and GitHub release
-      pull-requests: write # open and update the release PR
     steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write # create tag and GitHub release, push the release branch
+          permission-pull-requests: write # open, update and label the release PR
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
+          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
