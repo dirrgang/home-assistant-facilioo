@@ -4,6 +4,7 @@ import asyncio
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 import pytest
 from homeassistant.components.energy.validate import (
@@ -12,6 +13,7 @@ from homeassistant.components.energy.validate import (
 )
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.util import dt as dt_util
 
 import custom_components.facilioo.statistics as statistics_module
 from custom_components.facilioo.models import (
@@ -25,6 +27,8 @@ from custom_components.facilioo.statistics import (
     statistic_id,
     statistic_name,
 )
+
+BERLIN = ZoneInfo("Europe/Berlin")
 
 
 def month(value: str, when: date, estimated: bool = False) -> MonthlyConsumption:
@@ -48,7 +52,7 @@ def test_historical_backfill_has_baseline_and_cumulative_boundaries():
             month("0.500", date(2026, 1, 1)),
         ),
         {},
-        "Europe/Berlin",
+        BERLIN,
     )
     assert [point["sum"] for point in stats] == [0.0, 0.172, 0.938, 1.438]
     assert stats[0]["start"].minute == 0
@@ -66,8 +70,8 @@ def test_repeat_is_identical_and_correction_shifts_following_points():
         month("0.766", date(2025, 12, 1)),
         month("0.500", date(2026, 1, 1)),
     )
-    corrected, saved = build_statistics(current, original, "Europe/Berlin")
-    repeated, repeated_saved = build_statistics(current, saved, "Europe/Berlin")
+    corrected, saved = build_statistics(current, original, BERLIN)
+    repeated, repeated_saved = build_statistics(current, saved, BERLIN)
     assert [point["sum"] for point in corrected] == [0.0, 0.18, 0.946, 1.446]
     assert corrected == repeated
     assert saved == repeated_saved
@@ -78,7 +82,7 @@ def test_deleted_month_becomes_zero_increment_not_stale_data():
     stats, saved = build_statistics(
         (month("0.7", date(2025, 12, 1)),),
         old,
-        "Europe/Berlin",
+        BERLIN,
         {date(2025, 11, 1), date(2025, 12, 1)},
     )
     assert [point["sum"] for point in stats] == [0.0, 0.0, 0.7]
@@ -90,7 +94,7 @@ def test_temporarily_omitted_month_retains_last_known_value():
     stats, saved = build_statistics(
         (month("0.7", date(2025, 12, 1)),),
         old,
-        "Europe/Berlin",
+        BERLIN,
         {date(2025, 12, 1)},
     )
     assert [point["sum"] for point in stats] == [0.0, 0.2, 0.9]
@@ -104,7 +108,7 @@ def test_monthly_costs_have_independent_cumulative_series():
             cost_month("0.766", "15.94", date(2025, 12, 1)),
         ),
         {},
-        "Europe/Berlin",
+        BERLIN,
         costs=True,
     )
 
@@ -116,7 +120,7 @@ def test_missing_latest_cost_does_not_erase_stored_month():
     stats, saved = build_statistics(
         (cost_month("0.172", None, date(2025, 11, 1)),),
         {"2025-11-01": "3.40"},
-        "Europe/Berlin",
+        BERLIN,
         set(),
         costs=True,
     )
@@ -129,7 +133,7 @@ def test_deleted_cost_month_becomes_zero_increment():
     stats, saved = build_statistics(
         (),
         {"2025-11-01": "3.40", "2025-12-01": "15.94"},
-        "Europe/Berlin",
+        BERLIN,
         {date(2025, 11, 1)},
         costs=True,
     )
@@ -185,7 +189,7 @@ def test_warm_water_energy_has_independent_cumulative_series():
         MonthlyConsumption(date(2025, 12, 1), Decimal("0.766"), None, False, Decimal("44.5529")),
     )
 
-    stats, saved = build_statistics(current, {}, "Europe/Berlin", different_unit=True)
+    stats, saved = build_statistics(current, {}, BERLIN, different_unit=True)
 
     assert [point["sum"] for point in stats] == [0.0, 10.0018, 54.5547]
     assert saved == {"2025-11-01": "10.0018", "2025-12-01": "44.5529"}
@@ -200,7 +204,7 @@ def test_incomplete_initial_warm_water_energy_series_is_not_published():
         MonthlyConsumption(date(2025, 12, 1), Decimal("0.766"), None, False),
     )
 
-    assert build_statistics(current, {}, "Europe/Berlin", different_unit=True) == ([], {})
+    assert build_statistics(current, {}, BERLIN, different_unit=True) == ([], {})
 
 
 @pytest.mark.asyncio
@@ -225,10 +229,13 @@ async def test_layout_migration_clears_only_owned_series_once(monkeypatch):
     monkeypatch.setattr(
         statistics_module, "async_add_external_statistics", lambda hass, metadata, stats: None
     )
+    # No ``config.time_zone``: the manager must use Home Assistant's loaded zone
+    # instead of constructing ``ZoneInfo`` (blocking file I/O) on the event loop.
+    monkeypatch.setattr(dt_util, "get_default_time_zone", lambda: BERLIN)
     manager = object.__new__(FaciliooStatisticsManager)
     manager.hass = SimpleNamespace(
         loop=asyncio.get_running_loop(),
-        config=SimpleNamespace(time_zone="Europe/Berlin", currency="EUR"),
+        config=SimpleNamespace(currency="EUR"),
     )
     manager.entry = SimpleNamespace(entry_id="01K2NABC")
     manager.store = MemoryStore()

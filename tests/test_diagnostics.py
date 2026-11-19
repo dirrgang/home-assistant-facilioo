@@ -3,6 +3,9 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
+
+from homeassistant.util import dt as dt_util
 
 from custom_components.facilioo.diagnostics import async_get_config_entry_diagnostics
 from custom_components.facilioo.models import (
@@ -13,7 +16,10 @@ from custom_components.facilioo.models import (
 )
 
 
-async def test_diagnostics_include_counts_but_no_identifiers():
+async def test_diagnostics_include_counts_but_no_identifiers(monkeypatch):
+    # No ``config.time_zone``: diagnostics must use Home Assistant's loaded zone
+    # instead of constructing ``ZoneInfo`` (blocking file I/O) on the event loop.
+    monkeypatch.setattr(dt_util, "get_default_time_zone", lambda: ZoneInfo("Europe/Berlin"))
     updated_at = datetime(2026, 1, 2, 3, 4, tzinfo=UTC)
     data = ConsumptionData(
         meters=(
@@ -52,7 +58,7 @@ async def test_diagnostics_include_counts_but_no_identifiers():
     )
 
     diagnostics = await async_get_config_entry_diagnostics(
-        SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Berlin")), entry
+        SimpleNamespace(config=SimpleNamespace()), entry
     )
 
     assert diagnostics == {

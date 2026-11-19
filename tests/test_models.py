@@ -2,6 +2,7 @@
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -18,6 +19,8 @@ from custom_components.facilioo.models import (
     latest_readings_by_meter_month,
     resolve_meter_types,
 )
+
+BERLIN = ZoneInfo("Europe/Berlin")
 
 
 def test_meter_classification(meter_payload):
@@ -73,15 +76,15 @@ def test_label_fallback_and_unknown_unit():
 
 def test_billing_month_uses_local_period_end():
     period_end = datetime(2025, 11, 30, 23, tzinfo=UTC)
-    assert billing_month(period_end, "Europe/Berlin") == date(2025, 11, 1)
+    assert billing_month(period_end, BERLIN) == date(2025, 11, 1)
     summer_end = datetime(2025, 6, 30, 22, tzinfo=UTC)
-    assert billing_month(summer_end, "Europe/Berlin") == date(2025, 6, 1)
+    assert billing_month(summer_end, BERLIN) == date(2025, 6, 1)
 
 
 def test_aggregate_values_estimates_and_costs(meter_payload, reading_payload):
     meters = tuple(ConsumptionMeter.from_api(item) for item in meter_payload["items"])
     readings = tuple(ConsumptionReading.from_api(item) for item in reading_payload["items"])
-    result = aggregate_monthly(meters, readings, "Europe/Berlin")
+    result = aggregate_monthly(meters, readings, BERLIN)
     water = result[MeterKind.WARM_WATER]
     assert [item.value for item in water] == [Decimal("0.172"), Decimal("0.766")]
     assert water[-1].is_estimated is True
@@ -114,7 +117,7 @@ def test_new_revision_replaces_estimate_and_deleted_removes_month():
             "lastModified": "2025-12-02T00:00:00Z",
         }
     )
-    result = aggregate_monthly((meter,), (estimate, actual), "Europe/Berlin")
+    result = aggregate_monthly((meter,), (estimate, actual), BERLIN)
     assert result[MeterKind.WARM_WATER][0].value == Decimal("1.5")
     deleted = ConsumptionReading.from_api(
         base
@@ -126,7 +129,7 @@ def test_new_revision_replaces_estimate_and_deleted_removes_month():
         }
     )
     assert MeterKind.WARM_WATER not in aggregate_monthly(
-        (meter,), (estimate, actual, deleted), "Europe/Berlin"
+        (meter,), (estimate, actual, deleted), BERLIN
     )
 
 
@@ -153,12 +156,10 @@ def test_nullable_current_value_replaces_previous_month_value():
         }
     )
 
-    selected = latest_readings_by_meter_month((meter,), (original, cleared), "Europe/Berlin")
+    selected = latest_readings_by_meter_month((meter,), (original, cleared), BERLIN)
     assert tuple(selected.values()) == (cleared,)
     assert cleared.value is None
-    assert MeterKind.WARM_WATER not in aggregate_monthly(
-        (meter,), (original, cleared), "Europe/Berlin"
-    )
+    assert MeterKind.WARM_WATER not in aggregate_monthly((meter,), (original, cleared), BERLIN)
 
 
 def test_latest_revision_without_cost_replaces_stale_cost_revision():
@@ -185,12 +186,9 @@ def test_latest_revision_without_cost_replaces_stale_cost_revision():
         }
     )
 
-    selected = latest_readings_by_meter_month((meter,), (old, latest), "Europe/Berlin")
+    selected = latest_readings_by_meter_month((meter,), (old, latest), BERLIN)
     assert tuple(selected.values()) == (latest,)
-    assert (
-        aggregate_monthly((meter,), (old, latest), "Europe/Berlin")[MeterKind.WARM_WATER][0].costs
-        is None
-    )
+    assert aggregate_monthly((meter,), (old, latest), BERLIN)[MeterKind.WARM_WATER][0].costs is None
 
 
 def test_alternative_unit_total_requires_every_month():
@@ -311,10 +309,10 @@ def test_synthetic_meter_sets_have_independent_monthly_and_historical_sums(
     # Explicit test inputs, NOT an implemented unit selector. The parser has no
     # unit relationship model; hand-picked sets illustrate the design alternatives.
     selected = tuple(meter for meter in meters if meter.id in selected_ids)
-    monthly = aggregate_monthly(selected, readings, "Europe/Berlin")[MeterKind.WARM_WATER]
+    monthly = aggregate_monthly(selected, readings, BERLIN)[MeterKind.WARM_WATER]
     assert [item.value for item in monthly] == [Decimal(value) for value in monthly_values]
-    history, _ = build_statistics(monthly, {}, "Europe/Berlin")
-    costs, _ = build_statistics(monthly, {}, "Europe/Berlin", costs=True)
+    history, _ = build_statistics(monthly, {}, BERLIN)
+    costs, _ = build_statistics(monthly, {}, BERLIN, costs=True)
     assert [point["sum"] for point in history] == boundaries
     assert [point["sum"] for point in costs] == cost_boundaries
 
@@ -331,7 +329,7 @@ def test_multi_meter_revision_does_not_replace_other_meter_in_same_unit(multi_un
         }
     )
     selected = tuple(meter for meter in meters if meter.id in {101, 102})
-    monthly = aggregate_monthly(selected, readings + (corrected,), "Europe/Berlin")
+    monthly = aggregate_monthly(selected, readings + (corrected,), BERLIN)
     assert [item.value for item in monthly[MeterKind.WARM_WATER]] == [
         Decimal("1.75"),
         Decimal("1.25"),

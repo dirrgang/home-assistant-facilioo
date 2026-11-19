@@ -6,6 +6,7 @@ import json
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -22,6 +23,8 @@ from custom_components.facilioo.const import (
     READINGS_ENDPOINT,
     READINGS_SEARCH_ENDPOINT,
 )
+
+BERLIN = ZoneInfo("Europe/Berlin")
 
 
 def _contract() -> dict[str, Any]:
@@ -637,11 +640,11 @@ async def test_four_reading_routes_produce_identical_monthly_and_cumulative_hist
         assert [call[2]["params"]["PageNumber"] for call in session.calls] == [1, 2]
         if method == "POST":
             assert session.calls[0][2]["json"] == session.calls[1][2]["json"]
-        monthly = aggregate_monthly((meter,), readings, "Europe/Berlin")[meter.kind]
+        monthly = aggregate_monthly((meter,), readings, BERLIN)[meter.kind]
         assert [item.value for item in monthly] == [Decimal("0.75"), Decimal("0.25")]
-        consumption, _ = build_statistics(monthly, {}, "Europe/Berlin")
-        costs, _ = build_statistics(monthly, {}, "Europe/Berlin", costs=True)
-        alternative, _ = build_statistics(monthly, {}, "Europe/Berlin", different_unit=True)
+        consumption, _ = build_statistics(monthly, {}, BERLIN)
+        costs, _ = build_statistics(monthly, {}, BERLIN, costs=True)
+        alternative, _ = build_statistics(monthly, {}, BERLIN, different_unit=True)
         assert [point["sum"] for point in consumption] == [0, 0.75, 1.0]
         assert [point["sum"] for point in costs] == [0, 7.25, 10.0]
         assert [point["sum"] for point in alternative] == ([] if partial else [0, 36.5, 50.0])

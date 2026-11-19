@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import FaciliooApiClient, FaciliooAuthenticationError, FaciliooError
 from .const import (
@@ -157,18 +158,16 @@ class FaciliooCoordinator(DataUpdateCoordinator[ConsumptionData]):
         sync_started: datetime,
     ) -> tuple[ConsumptionReading, ...]:
         """Represent hard deletions long enough for statistics to revise affected months."""
+        time_zone = dt_util.get_default_time_zone()
         current_keys = {
-            (reading.meter_id, billing_month(reading.reading_date, self.hass.config.time_zone))
+            (reading.meter_id, billing_month(reading.reading_date, time_zone))
             for reading in current.values()
         }
         tombstones: list[ConsumptionReading] = []
         for reading_id, reading in previous.items():
             if reading_id in current or reading.deleted:
                 continue
-            key = (
-                reading.meter_id,
-                billing_month(reading.reading_date, self.hass.config.time_zone),
-            )
+            key = (reading.meter_id, billing_month(reading.reading_date, time_zone))
             if key in current_keys:
                 continue
             tombstones.append(replace(reading, deleted=True, last_modified=sync_started))
@@ -204,7 +203,7 @@ class FaciliooCoordinator(DataUpdateCoordinator[ConsumptionData]):
         except FaciliooError as err:
             raise UpdateFailed(str(err)) from err
 
-        monthly = aggregate_monthly(meters, readings, self.hass.config.time_zone)
+        monthly = aggregate_monthly(meters, readings, dt_util.get_default_time_zone())
         await self._async_save_sync_state(cached, sync_started, next_full_sync)
 
         known_meters = sum(meter.kind is not MeterKind.UNKNOWN for meter in meters)

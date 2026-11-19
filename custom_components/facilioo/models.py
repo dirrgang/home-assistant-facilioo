@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from .const import TYPE_HEATING, TYPE_WARM_WATER, UNIT_KWH, UNIT_M3
 
@@ -263,14 +262,17 @@ class ConsumptionData:
         return values[-1] if values else None
 
 
-def billing_month(reading_date: datetime, time_zone: str) -> date:
+def billing_month(reading_date: datetime, time_zone: tzinfo) -> date:
     """Map a period-end timestamp to its local billing month.
 
     Facilioo period ends can be exactly local midnight of the next month
     (for example 23:00 UTC in winter). Looking one microsecond back assigns
     the interval end to the month it closes without guessing a fixed offset.
+
+    Callers pass Home Assistant's already loaded zone: constructing a
+    ``ZoneInfo`` here would read the zone file on the event loop.
     """
-    local_end = reading_date.astimezone(ZoneInfo(time_zone))
+    local_end = reading_date.astimezone(time_zone)
     within_period = local_end - timedelta(microseconds=1)
     return date(within_period.year, within_period.month, 1)
 
@@ -278,7 +280,7 @@ def billing_month(reading_date: datetime, time_zone: str) -> date:
 def latest_readings_by_meter_month(
     meters: tuple[ConsumptionMeter, ...],
     readings: tuple[ConsumptionReading, ...],
-    time_zone: str,
+    time_zone: tzinfo,
 ) -> dict[tuple[int, date], ConsumptionReading]:
     """Select the newest known revision for each supported meter and month."""
     meter_kinds = {meter.id: meter.kind for meter in meters}
@@ -296,7 +298,7 @@ def latest_readings_by_meter_month(
 def aggregate_monthly(
     meters: tuple[ConsumptionMeter, ...],
     readings: tuple[ConsumptionReading, ...],
-    time_zone: str,
+    time_zone: tzinfo,
 ) -> dict[MeterKind, tuple[MonthlyConsumption, ...]]:
     """Select the newest revision per meter/month and aggregate meter kinds."""
     meter_kinds = {meter.id: meter.kind for meter in meters}
@@ -337,7 +339,7 @@ def aggregate_monthly(
     }
 
 
-def billing_coverage(data: ConsumptionData, kind: MeterKind, time_zone: str) -> dict[str, Any]:
+def billing_coverage(data: ConsumptionData, kind: MeterKind, time_zone: tzinfo) -> dict[str, Any]:
     """Summarize valid billing coverage without IDs or a completeness guarantee."""
     meters = tuple(meter for meter in data.meters if meter.kind is kind)
     latest_by_meter: dict[int, date] = {}

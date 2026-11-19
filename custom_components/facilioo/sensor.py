@@ -20,6 +20,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from . import FaciliooRuntimeData
 from .const import DOMAIN, NAME
@@ -251,7 +252,7 @@ class FaciliooSensor(CoordinatorEntity[FaciliooCoordinator], SensorEntity):
                     billing_coverage(
                         self.coordinator.data,
                         self.entity_description.kind,
-                        self.coordinator.hass.config.time_zone,
+                        dt_util.get_default_time_zone(),
                     )
                 )
         if self.entity_description.attrs_fn:
