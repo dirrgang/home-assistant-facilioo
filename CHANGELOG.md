@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.1...v0.3.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* use Home Assistant's loaded time zone instead of ZoneInfo ([#97](https://github.com/dirrgang/home-assistant-facilioo/issues/97)) ([ab4e337](https://github.com/dirrgang/home-assistant-facilioo/commit/ab4e33769d31d682238da1abf3cd98e77d02ba02))
+
 ## [0.3.1](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.0...v0.3.1) (2026-11-11)
 
 
