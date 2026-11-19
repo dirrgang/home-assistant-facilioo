@@ -4,9 +4,11 @@ name: Release
 # uv.lock and updates CHANGELOG.md from Conventional Commits. Merging it creates the
 # vX.Y.Z tag and GitHub release that HACS consumes. Nothing is built or uploaded.
 #
-# release-please authenticates as the repository's release GitHub App, not with
-# GITHUB_TOKEN: pull requests created with GITHUB_TOKEN do not trigger workflows, so CI
-# would not run on the release PR. Setup and key rotation: docs/release-automation.md.
+# release-please authenticates as a GitHub App, not with GITHUB_TOKEN: pull requests
+# created with GITHUB_TOKEN do not trigger workflows, so CI would not run on the release
+# PR. Requires the repository variable APP_CLIENT_ID and secret APP_PRIVATE_KEY of an App
+# installed on this repository with Contents and Pull requests read and write access.
+# Without them the run fails before release-please starts and nothing is released.
 on:
   push:
     branches: [master]
