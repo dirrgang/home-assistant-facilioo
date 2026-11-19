@@ -13,7 +13,6 @@ from homeassistant.components.energy.validate import (
 )
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import UnitOfEnergy
-from homeassistant.util import dt as dt_util
 
 import custom_components.facilioo.statistics as statistics_module
 from custom_components.facilioo.models import (
@@ -208,7 +207,7 @@ def test_incomplete_initial_warm_water_energy_series_is_not_published():
 
 
 @pytest.mark.asyncio
-async def test_layout_migration_clears_only_owned_series_once(monkeypatch):
+async def test_layout_migration_clears_only_owned_series_once(hass, monkeypatch):
     class MemoryStore:
         saved = {"months": {"warm_water": {"2025-11-01": "0.172"}}}
 
@@ -231,7 +230,7 @@ async def test_layout_migration_clears_only_owned_series_once(monkeypatch):
     )
     # No ``config.time_zone``: the manager must use Home Assistant's loaded zone
     # instead of constructing ``ZoneInfo`` (blocking file I/O) on the event loop.
-    monkeypatch.setattr(dt_util, "get_default_time_zone", lambda: BERLIN)
+    await hass.config.async_set_time_zone("Europe/Berlin")
     manager = object.__new__(FaciliooStatisticsManager)
     manager.hass = SimpleNamespace(
         loop=asyncio.get_running_loop(),
