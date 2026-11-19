@@ -6,10 +6,9 @@ import asyncio
 import logging
 import re
 from collections.abc import Iterator
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, tzinfo
 from decimal import Decimal
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from homeassistant.components.recorder.models import (
     StatisticData,
@@ -23,6 +22,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.recorder import get_instance
 from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 from homeassistant.util.unit_conversion import EnergyConverter, VolumeConverter
 
 from .const import (
@@ -99,15 +99,15 @@ def _month_range(first: date, last: date) -> Iterator[date]:
         month = _next_month(month)
 
 
-def _boundary(month: date, time_zone: str) -> datetime:
+def _boundary(month: date, time_zone: tzinfo) -> datetime:
     """Return local month boundary as an aware, top-of-hour UTC timestamp."""
-    return datetime(month.year, month.month, 1, tzinfo=ZoneInfo(time_zone)).astimezone(UTC)
+    return datetime(month.year, month.month, 1, tzinfo=time_zone).astimezone(UTC)
 
 
 def build_statistics(
     current: tuple[MonthlyConsumption, ...],
     previous: dict[str, str],
-    time_zone: str,
+    time_zone: tzinfo,
     observed_months: set[date] | None = None,
     *,
     costs: bool = False,
@@ -208,9 +208,8 @@ class FaciliooStatisticsManager:
         observed_by_kind: dict[MeterKind, set[date]] = {}
         observed_costs_by_kind: dict[MeterKind, set[date]] = {}
         observed_different_unit_by_kind: dict[MeterKind, set[date]] = {}
-        latest_readings = latest_readings_by_meter_month(
-            data.meters, data.readings, self.hass.config.time_zone
-        )
+        time_zone = dt_util.get_default_time_zone()
+        latest_readings = latest_readings_by_meter_month(data.meters, data.readings, time_zone)
         for (meter_id, month), reading in latest_readings.items():
             kind = meter_kinds[meter_id]
             observed_by_kind.setdefault(kind, set()).add(month)
@@ -271,7 +270,7 @@ class FaciliooStatisticsManager:
             stats, stored = build_statistics(
                 data.values(kind),
                 previous,
-                self.hass.config.time_zone,
+                time_zone,
                 (
                     observed_costs_by_kind.get(kind, set())
                     if is_costs

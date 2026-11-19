@@ -7,6 +7,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 
 from . import FaciliooRuntimeData
 from .models import MeterKind, billing_coverage
@@ -19,11 +20,12 @@ async def async_get_config_entry_diagnostics(
     runtime: FaciliooRuntimeData = entry.runtime_data
     data = runtime.coordinator.data
     meter_types = Counter(meter.kind.value for meter in data.meters)
+    time_zone = dt_util.get_default_time_zone()
     return {
         "api_status": "ok" if runtime.coordinator.last_update_success else "error",
         "last_successful_update": data.updated_at.isoformat(),
         "billing_coverage": {
-            kind.value: billing_coverage(data, kind, hass.config.time_zone)
+            kind.value: billing_coverage(data, kind, time_zone)
             for kind in (MeterKind.WARM_WATER, MeterKind.HEATING)
             if any(meter.kind is kind for meter in data.meters)
         },
