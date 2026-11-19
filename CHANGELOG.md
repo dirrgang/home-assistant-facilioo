@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.3...v0.3.4) (2026-11-19)
+
+
+### Documentation
+
+* describe installation from the default HACS catalog ([#103](https://github.com/dirrgang/home-assistant-facilioo/issues/103)) ([c7e3b41](https://github.com/dirrgang/home-assistant-facilioo/commit/c7e3b4195f7570f1984e6d635f6fb1daa0c80ea1))
+
 ## [0.3.3](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.2...v0.3.3) (2026-11-19)
 
 
