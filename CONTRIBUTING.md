@@ -11,7 +11,14 @@ Thank you for helping improve Home Assistant Facilioo.
    `mise run hooks` runs the same Git hooks as CI on all files, including a guard against
    committing credentials, Home Assistant storage, diagnostics downloads or API captures.
 4. Add tests for API/schema behavior and consumption/statistics semantics.
-5. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, ...).
+5. Give the pull request a [Conventional Commits](https://www.conventionalcommits.org/) title:
+   `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `style` or `revert`,
+   an optional scope, and `!` for a breaking change (`feat(sensor)!: rename entities`). Pull
+   requests are squash-merged, and the title alone becomes the commit on `master`; the
+   `PR title` check enforces the format. Commit messages inside the branch are discarded on
+   merge (Conventional Commits there are still welcome), and the description stays on the pull
+   request. To correct a merged entry, add a `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE`
+   block with the corrected message to the merged pull request's description before the release.
    Releases are cut by merging the release-please PR, which bumps `pyproject.toml`,
    `manifest.json` and `uv.lock` together and writes `CHANGELOG.md`; do not bump versions by hand.
 
