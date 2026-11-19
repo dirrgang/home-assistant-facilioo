@@ -16,7 +16,7 @@ with `home-assistant-facilioo`. White-label implementations can differ,
 and multi-factor authentication is currently unsupported.
 
 The integration's known working environment is described in the
-[README](../README.md#installation): the regular Facilioo API as observed
+[README](../README.md#requirements): the regular Facilioo API as observed
 through the MÜNCH Immo App. MÜNCH is the only entry below with
 maintainer-tested integration compatibility; every other provider remains
 unverified.
@@ -80,6 +80,8 @@ anonymized public report or other verifiable source.
 | Strauß & Bock Immobilien | Facilioo customer portal for owners, tenants, and contractors | Customer portal/app | Unverified | [Customer login](https://strauss-bock.de/kundenlogin/) | 2026-10-23 |
 | Wolf-Immobilien-Management GmbH | Facilioo app for tenants and owners | Customer app | Unverified | [Management services](https://www.w-i-m-immobilien.de/verwaltung) | 2026-10-23 |
 
+<a id="maintainer-tested-scope-muench-immo-app"></a>
+
 ### Maintainer-tested scope: MÜNCH Immo App
 
 The maintainer developed and has operated this integration with a
@@ -87,7 +89,7 @@ The maintainer developed and has operated this integration with a
 App**, including available monthly heating-energy and warm-water
 consumption data. This is the **Maintainer supported** scope for the
 specific tested configuration, as reflected in the
-[README's compatibility and setup guidance](../README.md#installation).
+[README's compatibility and setup guidance](../README.md#requirements).
 
 MÜNCH's [current portal page](https://xn--mnch-0ra.de/mein-muench/)
 identifies the MÜNCH Immo-App. Its [2021 company brochure (page 16)](https://s9d56e8dc6a45f17f.jimcontent.com/download/version/1629279571/module/16217164024/name/WEG-Broschuere_2021.pdf)

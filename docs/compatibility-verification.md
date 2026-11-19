@@ -19,10 +19,10 @@ behavior for their inputs; it cannot confirm a resident backend's actual access.
 | Meter/type metadata | Heating kWh and warm-water m3 in the documented baseline | Dynamic ConsumptionType labels, legacy IDs, unknown type/unit exclusion | Needed to establish that the variant supplies supported meters, not just a successful login |
 | Readings | Monthly billing-derived consumption, optional costs/alternative values | Pagination, offsets, nulls, estimates, revisions, deletion markers | Needed to establish actual interval/unit meaning and available history for that variant |
 | Incremental/reconciliation | Current documented sync design | changedSince request shape, persisted revisions, restart and hard-deletion reconciliation | Repeated local observation needed; a one-time response does not verify future corrections/deletions |
-| Home Assistant delivery | Maintainer-operated baseline described in README | Entities, reauth/identity, diagnostic freshness and external-statistics construction | Separate end-to-end install/import/dashboard check needed; an API probe alone is insufficient |
+| Home Assistant delivery | Maintainer-operated baseline described in the README and technical reference | Entities, reauth/identity, diagnostic freshness and external-statistics construction | Separate end-to-end install/import/dashboard check needed; an API probe alone is insufficient |
 
-Sources: [README](../README.md), [API contract review](api-contract-v2.md),
-[model tests](../tests/test_models.py), [API tests](../tests/test_api.py),
+Sources: [README](../README.md), [technical reference](technical-reference.md),
+[API contract review](api-contract-v2.md), [model tests](../tests/test_models.py), [API tests](../tests/test_api.py),
 [coordinator tests](../tests/test_coordinator.py), [statistics tests](../tests/test_statistics.py),
 [config-flow tests](../tests/test_config_flow.py), and [freshness tests](../tests/test_freshness.py).
 No independent variation is fabricated as a fixture merely to fill the final column.
