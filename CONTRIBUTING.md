@@ -26,6 +26,23 @@ Thank you for helping improve Home Assistant Facilioo.
 locked development environment, and installs the Git hook. Home Assistant's test harness targets
 Linux; native Windows cannot import its Unix-only runtime modules.
 
+Without mise, the individual gates run directly with [uv](https://docs.astral.sh/uv/) and
+Python 3.14.2 or newer:
+
+```bash
+uv sync --locked --all-groups
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+```
+
+Documentation is split by audience: `README.md` is the user-facing entry point (what the
+integration does, requirements, installation, setup, Energy Dashboard, FAQ), while
+[`docs/technical-reference.md`](docs/technical-reference.md) is the authoritative description of
+synchronization, statistics, entity attributes, freshness semantics, time zones and limitations.
+Update the technical reference with any behavior change, and the README only where users notice it.
+
 Toolchain and runtime policy:
 
 - **Python**: `mise.toml` and `.python-version` select the `3.14` line and resolve to its newest

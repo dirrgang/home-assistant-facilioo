@@ -1,6 +1,6 @@
 # Instructions for automated contributors
 
-This repository provides a community-maintained Home Assistant custom integration for Facilioo. Read `README.md`, `CONTRIBUTING.md`, and `SECURITY.md` before substantive work; inspect the relevant integration code, tests, existing issues, and open pull requests.
+This repository provides a community-maintained Home Assistant custom integration for Facilioo. Read `README.md`, `docs/technical-reference.md`, `CONTRIBUTING.md`, and `SECURITY.md` before substantive work; inspect the relevant integration code, tests, existing issues, and open pull requests.
 
 ## Work tracking and handoffs
 
