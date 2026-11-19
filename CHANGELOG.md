@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.2...v0.3.3) (2026-11-19)
+
+
+### Documentation
+
+* rewrite README for users and move technical details to a reference ([#101](https://github.com/dirrgang/home-assistant-facilioo/issues/101)) ([fe55e31](https://github.com/dirrgang/home-assistant-facilioo/commit/fe55e31d0794000f889decb232ca894990a96fa8))
+
 ## [0.3.2](https://github.com/dirrgang/home-assistant-facilioo/compare/v0.3.1...v0.3.2) (2026-11-19)
 
 
