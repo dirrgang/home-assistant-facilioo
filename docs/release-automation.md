@@ -23,6 +23,9 @@ the workflow requests, and is not tied to a maintainer's personal account.
 
 ## One-time setup
 
+One App can serve several of the maintainer's repositories. If it already exists, skip to
+step 3.
+
 1. Under **Settings → Developer settings → GitHub Apps → New GitHub App**, create an App:
    - **GitHub App name**: any unique name; release commits are authored as `<name>[bot]`.
    - **Homepage URL**: the repository URL.
@@ -32,7 +35,8 @@ the workflow requests, and is not tied to a maintainer's personal account.
    - **Where can this GitHub App be installed?**: **Only on this account**.
 2. On the App's page, note the **Client ID** and use **Generate a private key**; the browser
    downloads a `.pem` file.
-3. Use **Install App** and install it on **Only select repositories**: this repository.
+3. Under **Install App**, install the App on **Only select repositories** and include this
+   repository (for an existing installation: **Configure → Repository access**).
 4. Store the credentials in the repository, then delete the local `.pem` file:
 
    ```bash
@@ -55,7 +59,7 @@ documentation also lists `issues: write`, but labelling the release pull request
 ## Key rotation and failures
 
 To rotate the key, generate a new private key on the App's page, replace the
-`APP_PRIVATE_KEY` secret, and delete the old key there.
+`APP_PRIVATE_KEY` secret in every repository that uses the App, and delete the old key there.
 
 If the client ID or key is missing or invalid, the token step fails and the run stops before
 release-please starts: no release pull request, tag or release is created, and nothing else is
