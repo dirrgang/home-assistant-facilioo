@@ -1,7 +1,7 @@
 # Facilioo for Home Assistant
 
 [![Release](https://img.shields.io/github/v/release/dirrgang/home-assistant-facilioo)](https://github.com/dirrgang/home-assistant-facilioo/releases/latest)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](#installation)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](#installation)
 [![Home Assistant 2026.4+](https://img.shields.io/badge/Home%20Assistant-2026.4%2B-41BDF5?logo=homeassistant&logoColor=white)](#requirements)
 [![Home Assistant validation](https://github.com/dirrgang/home-assistant-facilioo/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/dirrgang/home-assistant-facilioo/actions/workflows/validate.yml)
 
@@ -56,20 +56,12 @@ numbers into Home Assistant, so you can see them next to the rest of your energy
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dirrgang&repository=home-assistant-facilioo&category=integration)
 
-1. Select the button above. HACS opens the repository and, if needed, offers to add it as a
-   custom repository.
+Facilioo is available in the default HACS catalog, so you don't need to add a custom
+repository.
+
+1. Select the button above, or open **HACS** in Home Assistant and search for **Facilioo**.
 2. Select **Download**.
 3. Restart Home Assistant.
-
-<details>
-<summary>The button doesn't work? Add the repository by hand</summary>
-
-1. In Home Assistant, open **HACS** and select **⋮ → Custom repositories**.
-2. Enter `https://github.com/dirrgang/home-assistant-facilioo`, choose the type
-   **Integration**, and select **Add**.
-3. Open **Facilioo** in HACS, select **Download**, and restart Home Assistant.
-
-</details>
 
 ### Manual installation
 
@@ -227,8 +219,8 @@ bestätigt. Die Werte sind monatliche Abrechnungsdaten, keine Live-Zählerständ
 
 **So richtest du sie ein:**
 
-1. Füge die Integration über den HACS-Button oben hinzu, oder in HACS unter
-   **⋮ → Benutzerdefinierte Repositories**. Lade sie herunter und starte Home Assistant neu.
+1. Öffne die Integration über den HACS-Button oben, oder suche in HACS nach **Facilioo**. Sie
+   ist im Standardkatalog von HACS enthalten. Lade sie herunter und starte Home Assistant neu.
 2. Wähle **Einstellungen → Geräte & Dienste → Integration hinzufügen → Facilioo** und gib die
    Zugangsdaten deines Bewohnerportals ein.
 3. Füge unter **Einstellungen → Dashboards → Energie** die Statistiken
